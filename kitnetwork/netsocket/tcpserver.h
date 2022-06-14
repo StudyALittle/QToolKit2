@@ -1,4 +1,4 @@
-#ifndef TCPSERVER_H
+﻿#ifndef TCPSERVER_H
 #define TCPSERVER_H
 
 #include <QMap>
@@ -7,6 +7,8 @@
 #include <memory>
 #include <QThread>
 #include "tcpclient.h"
+
+namespace wkit {
 
 class TcpServer: public QObject
 {
@@ -58,5 +60,7 @@ private:
     QMap<quint32, QMap<int, TcpClient::Ptr> > m_clients;
     QMutex m_mutexClients;
 };
+
+} // end namespace
 
 #endif // TCPSERVER_H

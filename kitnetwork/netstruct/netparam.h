@@ -4,8 +4,9 @@
 #include <QString>
 #include <QByteArray>
 #include <QVariantMap>
-#include "ctypedefsyntax.h"
-#include "globalutil.h"
+#include "datautil/mapjsonutil.h"
+
+namespace wkit {
 
 enum NetResultCode {
     NetError = -5,      // 网络错误
@@ -39,7 +40,7 @@ struct NetPageParam {
     }
     NetPageParam(const QByteArray &jsonData) {
         bOk = true;
-        QVariantMap mapData = GlobalUtil::byteArrayToVariantMap(jsonData);
+        QVariantMap mapData = MapJsonUtil::byteArrayToVariantMap(jsonData);
         jsonMapToThis(mapData);
     }
     NetPageParam(const QVariantMap &mapData) {
@@ -93,7 +94,7 @@ struct RequestJsonParam {
     }
     RequestJsonParam(const QByteArray &jsonData) {
         bOk = true;
-        QVariantMap mapData = GlobalUtil::byteArrayToVariantMap(jsonData);
+        QVariantMap mapData = MapJsonUtil::byteArrayToVariantMap(jsonData);
         if(!mapData.contains("apiA") || !mapData.contains("apiB")) {
             bOk = false;
             return;
@@ -117,7 +118,7 @@ struct RequestJsonParam {
         dataMap.insert("apiA", apiA);
         dataMap.insert("apiB", apiB);
         dataMap.insert("params", params);
-        return std::make_shared<QByteArray>(GlobalUtil::variantMapToJson(dataMap));
+        return std::make_shared<QByteArray>(MapJsonUtil::variantMapToJson(dataMap));
     }
     void setMapData(const QVariantMap &mapData) {
         params = mapData;
@@ -155,7 +156,7 @@ struct ResponseJsonParam {
     /// 解析json数据
     ResponseJsonParam(const QByteArray &jsonData) {
         bOk = true;
-        QVariantMap mapData = GlobalUtil::byteArrayToVariantMap(jsonData);
+        QVariantMap mapData = MapJsonUtil::byteArrayToVariantMap(jsonData);
         if(!mapData.contains("errCode")) {
             bOk = false;
             return;
@@ -190,7 +191,7 @@ struct ResponseJsonParam {
         dataMap.insert("errCode", errCode);
         dataMap.insert("apiA", apiA);
         dataMap.insert("apiB", apiB);
-        return std::make_shared<QByteArray>(GlobalUtil::variantMapToJson(dataMap));
+        return std::make_shared<QByteArray>(MapJsonUtil::variantMapToJson(dataMap));
     }
 
     QVariantMap map() const {
@@ -211,4 +212,6 @@ struct ResponseJsonParam {
         data = mapData;
     }
 };
+
+} // end namespace
 #endif // NETPARAM_H

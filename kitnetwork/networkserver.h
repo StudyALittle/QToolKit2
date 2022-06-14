@@ -12,6 +12,8 @@
 #include <QTimer>
 #include <memory>
 
+namespace wkit {
+
 class TcpServer;
 class UdpServer;
 class NetDataReslice;
@@ -76,4 +78,5 @@ private:
     NetDataReslice *m_netDataReslice;
 };
 
+} // end namespace
 #endif // NETWORKSERVER_H

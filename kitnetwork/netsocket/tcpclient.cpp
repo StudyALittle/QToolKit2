@@ -1,6 +1,8 @@
 ﻿#include "tcpclient.h"
 #include <QHostAddress>
 
+using namespace wkit;
+
 TcpClient::TcpClient(QTcpSocket *tcpSocket, quint32 ipv4, quint16 port):
     m_tcpSocket(tcpSocket), m_ipV4(ipv4), m_port(port)
 {

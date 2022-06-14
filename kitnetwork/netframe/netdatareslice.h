@@ -8,6 +8,8 @@
 #include <memory>
 #include "netframedatareslice.h"
 
+namespace wkit {
+
 class NetDataReslice
 {
 public:
@@ -44,5 +46,7 @@ private:
     TcpClient *m_tcpClient;
     TcpServer *m_tcpServer;
 };
+
+}
 
 #endif // NETDATARESLICE_H

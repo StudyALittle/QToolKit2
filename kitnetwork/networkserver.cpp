@@ -3,6 +3,8 @@
 #include "netsocket/tcpserver.h"
 #include "netframe/netdatareslice.h"
 
+using namespace wkit;
+
 NetworkServer::NetworkServer(NetworkTreatyType type)
 {
     m_tType = type;

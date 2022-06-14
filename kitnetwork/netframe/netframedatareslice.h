@@ -25,6 +25,8 @@
 // 丢弃5秒前的缓存数据(ms)
 #define BUF_DEL_TIME_SPACE 5000
 
+namespace wkit {
+
 // 保存接收到的一帧数据
 struct FrameItem {
     // 数据头
@@ -353,5 +355,7 @@ private:
     quint64 m_lastTime;
     uint m_cutIdentif;
 };
+
+} // end namespace wkit
 
 #endif // NETFRAMEDATARESLICE_H

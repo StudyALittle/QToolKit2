@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 
+namespace wkit {
+
 class DataUtil
 {
 public:
@@ -132,5 +134,7 @@ public:
             return true;
     }
 };
+
+} // end namespace
 
 #endif // DATAUTIL_H

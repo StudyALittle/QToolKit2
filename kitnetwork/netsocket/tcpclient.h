@@ -9,6 +9,8 @@
 /// tcp最大接收缓冲区
 #define TCP_READBUF_MAX_SIZE 1024*1024*10
 
+namespace wkit {
+
 class TcpClient: public QObject
 {
     Q_OBJECT
@@ -77,5 +79,7 @@ private:
     bool m_bDisconnect; // 是否已经与对端断开了连接
     QAbstractSocket::SocketError m_lastSocketError;
 };
+
+} // end namespace wkit
 
 #endif // TCPCLIENT_H

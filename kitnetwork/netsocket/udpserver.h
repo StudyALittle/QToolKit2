@@ -5,6 +5,8 @@
 #include <QByteArray>
 #include <memory>
 
+namespace wkit {
+
 class UdpServer: public QObject
 {
     Q_OBJECT
@@ -48,5 +50,7 @@ private:
 
     QUdpSocket m_udp;
 };
+
+} // end namespace
 
 #endif // UDPSERVER_H

@@ -2,6 +2,8 @@
 #include <QDebug>
 #include <QNetworkDatagram>
 
+using namespace wkit;
+
 UdpServer::UdpServer()
 {
     /// 设置接收缓冲区大小

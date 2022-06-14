@@ -12,7 +12,7 @@ CONFIG(debug, debug|release) {
 
 # 动态库路径
 CONFIG(debug, debug|release) {
-    LIBS += -L$$PWD/../lib_debug -l$$LIB_NAME
+    LIBS += -L$$PWD/../../lib_debug -l$$LIB_NAME
 }else {
-    LIBS += -L$$PWD/../lib_release -l$$LIB_NAME
+    LIBS += -L$$PWD/../../lib_release -l$$LIB_NAME
 }

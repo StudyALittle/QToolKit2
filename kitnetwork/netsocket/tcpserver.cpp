@@ -1,4 +1,6 @@
-#include "tcpserver.h"
+﻿#include "tcpserver.h"
+
+using namespace wkit;
 
 TcpServer::TcpServer()
 {

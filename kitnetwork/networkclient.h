@@ -13,6 +13,8 @@
 #include <QThread>
 #include <memory>
 
+namespace wkit {
+
 class TcpClient;
 class UdpServer;
 class NetDataReslice;
@@ -146,4 +148,5 @@ private:
     bool m_bBigLittleMode; // true: 判断数据大小端
 };
 
+} // end namespace
 #endif // NETWORKCLIENT_H

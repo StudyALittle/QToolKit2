@@ -1,5 +1,7 @@
 ﻿#include "netdatareslice.h"
 
+using namespace wkit;
+
 NetDataReslice::NetDataReslice(UdpServer *udpServer):
     m_udpServer(udpServer)
 {

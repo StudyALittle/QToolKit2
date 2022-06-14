@@ -24,9 +24,9 @@ CONFIG(debug, debug|release) {
 }
 # 动态库生成路径
 CONFIG(release, debug|release) {
-    DESTDIR = $$PWD/../lib_release
+    DESTDIR = $$PWD/../../lib_release
 }else {
-    DESTDIR = $$PWD/../lib_debug
+    DESTDIR = $$PWD/../../lib_debug
 }
 
 include($$PWD/../kitutil/kitutil.pri)

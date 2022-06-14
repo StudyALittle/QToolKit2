@@ -4,6 +4,8 @@
 #include "netframe/netdatareslice.h"
 #include <QDateTime>
 
+using namespace wkit;
+
 NetworkClient::NetworkClient(NetworkTreatyType type)
 {
     m_tType = type;

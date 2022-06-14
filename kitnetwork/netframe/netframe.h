@@ -5,6 +5,8 @@
 #include <memory>
 #include "datautil/datautil.h"
 
+namespace wkit {
+
 #pragma pack(1)
 /** 数据帧信息头结构 */
 struct NetFrameHead
@@ -45,5 +47,7 @@ typedef struct Session{
     quint16 port;
     std::shared_ptr<NetFrameHead> head;
 } Session;
+
+} // end namespace wkit
 
 #endif // NETFRAME_H

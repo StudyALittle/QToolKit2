@@ -1,5 +1,7 @@
 ﻿#include "netframedatareslice.h"
 
+using namespace wkit;
+
 NetFrameDataReslice::NetFrameDataReslice()
 {
     m_fEnd = 0xFFFF;
