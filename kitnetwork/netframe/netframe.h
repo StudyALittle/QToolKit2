@@ -38,8 +38,10 @@ enum NetworkTreatyType {
 
 enum DataFrameType {
     FT_MAnd         = 0x0FF0,    // 无效类型 FT_MAnd & 其它数据类型 == FT_SyncData 表示是同步数据
-    FT_SyncData     = 0x0990,    // 同步数据 0x1FF1 0x2FF1 0x~FF~ 都会同步处理接收数据
-    FT_SyncYncData  = 0x0880,    // 同步/异步数据
+    FT_SyncData     = 0x0110,    // 同步数据 0x1FF1 0x2FF1 0x~FF~ 都会同步处理接收数据
+    FT_SyncYncData  = 0x0220,    // 同步/异步数据
+
+    FT_JSON         = 0x0221,    // 携带json格式数据
 };
 
 typedef struct Session{

@@ -32,6 +32,8 @@ CONFIG(release, debug|release) {
 include($$PWD/../kitutil/kitutil.pri)
 
 SOURCES += \
+    apiclientjsonbase.cpp \
+    apiserverjsonbase.cpp \
     netframe/netdatareslice.cpp \
     netframe/netframe.cpp \
     netframe/netframedatareslice.cpp \
@@ -42,6 +44,8 @@ SOURCES += \
     networkserver.cpp
 
 HEADERS += \
+    apiclientjsonbase.h \
+    apiserverjsonbase.h \
     kitnetwork_global.h \
     netframe/netdatareslice.h \
     netframe/netframe.h \
@@ -49,6 +53,7 @@ HEADERS += \
     netsocket/tcpclient.h \
     netsocket/tcpserver.h \
     netsocket/udpserver.h \
+    netstruct/netpagest.h \
     netstruct/netparam.h \
     networkclient.h \
     networkserver.h

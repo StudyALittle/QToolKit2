@@ -4,6 +4,7 @@
 #include <QString>
 #include <QByteArray>
 #include <QVariantMap>
+#include <QStringList>
 #include "datautil/mapjsonutil.h"
 
 namespace wkit {
@@ -17,199 +18,176 @@ enum NetResultCode {
     Success = 0         // 表示执行结果成功
 };
 
-///
-/// \brief The PageParam struct : 分页数据
-///
-struct NetPageParam {
-    bool bOk;
+/// 请求参数
+struct RequestMapJson {
+    using Ptr = std::shared_ptr<RequestMapJson>;
+
+    QString api;    // 接口 格式 /aa/bb
+    QVariant data;  // 输入参数 json格式
+    QStringList apis; // 解析后的api
+
+    /// 获取api
+    QString apiAt(int index) {
+        if(index < 0 || index >= apis.size())
+            return QString();
+        return apis.at(index);
+    }
+
+    /// 打包数据
+    static QVariantMap packData(const QString &_api, const QVariant &_data = QVariant()) {
+        QVariantMap dataMap;
+        dataMap.insert("api", _api);
+        dataMap.insert("data", _data);
+        return dataMap;
+    }
+
+    /// 解析数据
+    static RequestMapJson::Ptr unpackData(const QVariantMap &mapJson) {
+        auto request = std::make_shared<RequestMapJson>();
+        if(mapJson.contains("api")) {
+            request->api = mapJson.value("api").toString();
+            request->apis = request->api.split("/", QString::SkipEmptyParts);
+        }
+        if(mapJson.contains("data"))
+            request->data = mapJson.value("data").toMap();
+        return request;
+    }
+};
+
+struct RequestPageMapJson: public RequestMapJson {
+    using Ptr = std::shared_ptr<RequestPageMapJson>;
+
+    int pageIndex;          // 第几页
+    int pageSize;           // 每页数量
+    QVariantMap pagePars; // 请求参数
+
+    /// 打包分页数据
+    static QVariantMap packData(const QString &_api, int pageIndex, int pageSize, const QVariant &_params = QVariantMap()) {
+        QVariantMap pageMap;
+        pageMap.insert("pageIndex", pageIndex);
+        pageMap.insert("pageSize", pageSize);
+        pageMap.insert("params", _params);
+        return RequestMapJson::packData(_api, pageMap);
+    }
+
+    /// 解析分页数据
+    static RequestPageMapJson::Ptr unpackPageData(const QVariantMap &mapJson) {
+        auto req = RequestMapJson::unpackData(mapJson);
+
+        auto request = std::make_shared<RequestPageMapJson>();
+        request->api = req->api;
+        request->apis = req->apis;
+
+        QVariantMap vmap = req->data.toMap();
+        if(vmap.contains("pageIndex"))
+            request->pageIndex = vmap.value("pageIndex").toInt();
+        if(vmap.contains("pageSize"))
+            request->pageSize = vmap.value("pageSize").toInt();
+        if(vmap.contains("params"))
+            request->pagePars = vmap.value("params").toMap();
+        return request;
+    }
+};
+
+/// 返回参数
+struct ResponseMapJson {
+    using Ptr = std::shared_ptr<ResponseMapJson>;
+
+    NetResultCode errCode;  // 执行错误编码
+    QString error;          // 错误信息
+    QString api;            // 调用的接口
+    QStringList apis;       // 解析后的api
+    QVariant data;          // 返回数据
+
+    /// 获取api
+    QString apiAt(int index) {
+        if(index < 0 || index >= apis.size())
+            return QString();
+        return apis.at(index);
+    }
+
+    /// 打包数据（无数据返回）
+    static QVariantMap packData(const QString &_api) {
+        return ResponseMapJson::packData(_api, QVariant(), QString(), NetResultCode::Success);
+    }
+
+    /// 打包数据（有数据返回）
+    static QVariantMap packData(const QString &_api, const QVariant &_data) {
+        return ResponseMapJson::packData(_api, _data, QString(), NetResultCode::Success);
+    }
+
+    /// 打包数据（无数据返回，自定义错误）
+    static QVariantMap packData(const QString &_api, NetResultCode errCod, const QString &_error = QString()) {
+        return ResponseMapJson::packData(_api, QVariant(), _error, errCod);
+    }
+
+    /// 打包数据
+    static QVariantMap packData(const QString &_api, const QVariant &_data,
+                                const QString &_error, NetResultCode errCode) {
+        QVariantMap dataMap;
+        dataMap.insert("errCode", errCode);
+        dataMap.insert("error", _error);
+        dataMap.insert("api", _api);
+        dataMap.insert("data", _data);
+        return dataMap;
+    }
+
+    /// 解析数据
+    static ResponseMapJson::Ptr unpackData(const QVariantMap &mapJson) {
+        auto request = std::make_shared<ResponseMapJson>();
+        if(mapJson.contains("api")) {
+            request->api = mapJson.value("api").toString();
+            request->apis = request->api.split("/", QString::SkipEmptyParts);
+        }
+        if(mapJson.contains("error"))
+            request->error = mapJson.value("error").toString();
+        if(mapJson.contains("errCode"))
+            request->errCode = static_cast<NetResultCode>(mapJson.value("errCode").toInt());
+        if(mapJson.contains("data"))
+            request->data = mapJson.value("data").toMap();
+        return request;
+    }
+};
+
+struct ResponsePageMapJson: public ResponseMapJson {
+    using Ptr = std::shared_ptr<ResponsePageMapJson>;
+
     int totalSize;
     int pageIndex;
     int pageSize;
     QVariantList listData;
 
-    NetPageParam() {
-        bOk = true;
-        totalSize = 0;
-        pageIndex = 0;
-        pageSize = 0;
-    }
-    NetPageParam(int _totalSize, int _pageIndex, int _pageSize) {
-        totalSize = _totalSize;
-        pageIndex = _pageIndex;
-        pageSize = _pageSize;
-    }
-    NetPageParam(const QByteArray &jsonData) {
-        bOk = true;
-        QVariantMap mapData = MapJsonUtil::byteArrayToVariantMap(jsonData);
-        jsonMapToThis(mapData);
-    }
-    NetPageParam(const QVariantMap &mapData) {
-        jsonMapToThis(mapData);
+    /// 打包分页数据
+    static QVariantMap packData(const QString &_api, int totalSize, int pageIndex, int pageSize,
+                                    const QVariantList &listData = QVariantList()) {
+        QVariantMap pageMap;
+        pageMap.insert("pageIndex", pageIndex);
+        pageMap.insert("pageSize", pageSize);
+        pageMap.insert("totalSize", totalSize);
+        pageMap.insert("listData", listData);
+        return ResponseMapJson::packData(_api, pageMap);
     }
 
-    void jsonMapToThis(const QVariantMap &mapData) {
-        bOk = true;
-        if(!mapData.contains("totalSize") || !mapData.contains("pageIndex") ||
-                !mapData.contains("pageSize")) {
-            bOk = false;
-            return;
-        }
-        totalSize = mapData.value("totalSize").toInt();
-        pageIndex = mapData.value("pageIndex").toInt();
-        pageSize = mapData.value("pageSize").toInt();
-        if(mapData.contains("listData")) {
-            listData = mapData.value("listData").toList();
-        }
-    }
+    /// 解析分页数据
+    static ResponsePageMapJson::Ptr unpackPageData(const QVariantMap &mapJson) {
+        auto req = ResponseMapJson::unpackData(mapJson);
 
-    void add(const QVariantMap &mapData) {
-        listData.append(mapData);
-    }
+        auto request = std::make_shared<ResponsePageMapJson>();
+        request->api = req->api;
+        request->apis = req->apis;
+        request->error = req->error;
+        request->errCode = req->errCode;
 
-    QVariantMap toMap() const {
-        QVariantMap dataMap;
-        dataMap.insert("totalSize", totalSize);
-        dataMap.insert("pageIndex", pageIndex);
-        dataMap.insert("pageSize", pageSize);
-        dataMap.insert("listData", listData);
-        return dataMap;
-    }
-};
-
-///
-/// \brief The RequestJsonParam struct: 客户端调用后端接口输入参数
-///
-struct RequestJsonParam {
-    bool bOk; // 数据解析结果
-    QString apiA; // 接口A
-    QString apiB; // 接口B
-    QVariant params; // 输入参数 json 数据
-
-    RequestJsonParam() { bOk = true; }
-    RequestJsonParam(const QString &_apiA, const QString &_apiB, const QVariant &_params = QVariant()) {
-        bOk = true;
-        apiA = _apiA;
-        apiB = _apiB;
-        params = _params;
-    }
-    RequestJsonParam(const QByteArray &jsonData) {
-        bOk = true;
-        QVariantMap mapData = MapJsonUtil::byteArrayToVariantMap(jsonData);
-        if(!mapData.contains("apiA") || !mapData.contains("apiB")) {
-            bOk = false;
-            return;
-        }
-        apiA = mapData.value("apiA").toString();
-        apiB = mapData.value("apiB").toString();
-        if(mapData.contains("params")) {
-            params = mapData.value("params");
-        }
-    }
-
-    QVariantMap map() const {
-        return params.toMap();
-    }
-    QVariantList list() const {
-        return params.toList();
-    }
-
-    QByteArrayPtr toDataPtr() {
-        QVariantMap dataMap;
-        dataMap.insert("apiA", apiA);
-        dataMap.insert("apiB", apiB);
-        dataMap.insert("params", params);
-        return std::make_shared<QByteArray>(MapJsonUtil::variantMapToJson(dataMap));
-    }
-    void setMapData(const QVariantMap &mapData) {
-        params = mapData;
-    }
-};
-///
-/// \brief The RequestJsonParam struct: 后端接口返回结果给前端参数
-///
-struct ResponseJsonParam {
-    bool bOk;               // 数据解析结果
-    int result;             // （bool, int）执行结果
-    NetResultCode errCode;  // 执行错误编码
-    QString error;          // 错误信息
-    QVariant data;          // 返回数据
-    QString apiB;           // 请求的接口传回去
-    QString apiA;           // 请求的接口传回去
-
-    ResponseJsonParam() { bOk = true; errCode = NetResultCode::Error; result = 0;}
-
-    /// 设置返回参数
-    ResponseJsonParam(NetResultCode _errCode, int _result, const QVariant &_data = QVariant(), const QString &_error = "") {
-        bOk = true;
-        result = _result;
-        data = _data;
-        error = _error;
-        errCode = _errCode;
-    }
-    /// 设置返回参数
-    ResponseJsonParam(NetResultCode _errCode, int _result, const QString &_error) {
-        bOk = true;
-        result = _result;
-        error = _error;
-        errCode = _errCode;
-    }
-    /// 解析json数据
-    ResponseJsonParam(const QByteArray &jsonData) {
-        bOk = true;
-        QVariantMap mapData = MapJsonUtil::byteArrayToVariantMap(jsonData);
-        if(!mapData.contains("errCode")) {
-            bOk = false;
-            return;
-        }
-        errCode = static_cast<NetResultCode>(mapData.value("errCode").toInt());
-        if(!mapData.contains("result")) {
-            bOk = false;
-            return;
-        }
-        result = mapData.value("result").toInt();
-
-        if(mapData.contains("error"))
-            error = mapData.value("error").toString();
-        if(mapData.contains("data"))
-            data = mapData.value("data");
-        if(mapData.contains("apiA"))
-            apiA = mapData.value("apiA").toString();
-        if(mapData.contains("apiB"))
-            apiB = mapData.value("apiB").toString();
-    }
-
-    void setApiName(const QString &_apiA, const QString &_apiB) {
-        apiA = _apiA;
-        apiB = _apiB;
-    }
-
-    QByteArrayPtr toDataPtr() {
-        QVariantMap dataMap;
-        dataMap.insert("result", result);
-        dataMap.insert("data", data);
-        dataMap.insert("error", error);
-        dataMap.insert("errCode", errCode);
-        dataMap.insert("apiA", apiA);
-        dataMap.insert("apiB", apiB);
-        return std::make_shared<QByteArray>(MapJsonUtil::variantMapToJson(dataMap));
-    }
-
-    QVariantMap map() const {
-        return data.toMap();
-    }
-    QVariantList list() const {
-        return data.toList();
-    }
-
-    NetPageParam netPage() {
-        return NetPageParam(map());
-    }
-
-    void setPageData(const NetPageParam &page) {
-        data = page.toMap();
-    }
-    void setMapData(const QVariantMap &mapData) {
-        data = mapData;
+        QVariantMap vmap = req->data.toMap();
+        if(vmap.contains("pageIndex"))
+            request->pageIndex = vmap.value("pageIndex").toInt();
+        if(vmap.contains("pageSize"))
+            request->pageSize = vmap.value("pageSize").toInt();
+        if(vmap.contains("params"))
+            request->totalSize = vmap.value("params").toInt();
+        if(vmap.contains("listData"))
+            request->listData = vmap.value("listData").toList();
+        return request;
     }
 };
 

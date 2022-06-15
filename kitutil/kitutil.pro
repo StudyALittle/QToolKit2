@@ -1,4 +1,5 @@
 QT -= gui
+QT += xml
 
 TEMPLATE = lib
 DEFINES += KITUTIL_LIBRARY
@@ -31,14 +32,18 @@ CONFIG(release, debug|release) {
 SOURCES += \
     datautil/datautil.cpp \
     datautil/mapjsonutil.cpp \
-    kitutil.cpp
+    fileutil/xmlreadwriteutil.cpp \
+    kitutil.cpp \
+    thread/threadpool.cpp
 
 HEADERS += \
     ctypedefsyntax.h \
     datautil/datautil.h \
     datautil/mapjsonutil.h \
+    fileutil/xmlreadwriteutil.h \
     kitutil_global.h \
-    kitutil.h
+    kitutil.h \
+    thread/threadpool.h
 
 # Default rules for deployment.
 unix {
