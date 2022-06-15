@@ -1,5 +1,5 @@
 QT -= gui
-QT += xml
+QT += xml sql
 
 TEMPLATE = lib
 DEFINES += KITUTIL_LIBRARY
@@ -30,6 +30,9 @@ CONFIG(release, debug|release) {
 }
 
 SOURCES += \
+    database/database.cpp \
+    database/databaseconparam.cpp \
+    database/dbconnectionpool.cpp \
     datautil/datautil.cpp \
     datautil/mapjsonutil.cpp \
     fileutil/xmlreadwriteutil.cpp \
@@ -38,6 +41,9 @@ SOURCES += \
 
 HEADERS += \
     ctypedefsyntax.h \
+    database/database.h \
+    database/databaseconparam.h \
+    database/dbconnectionpool.h \
     datautil/datautil.h \
     datautil/mapjsonutil.h \
     fileutil/xmlreadwriteutil.h \
