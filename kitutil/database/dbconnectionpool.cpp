@@ -31,23 +31,18 @@ QSqlDatabase DbConItem::database()
         QString conName = QString::number(m_threadId);
         *m_database = QSqlDatabase::addDatabase(m_dbType, conName);
 
-#if defined(SQL_DRIVE_SQLITE)
-        const QDir writeDir = qApp->applicationDirPath() + QString(QDir::separator()) + "sqlitedbfile";
-        if (!writeDir.mkpath(".")) {
-            LG4_ERROR(QString("create dir db file error: %1").arg(writeDir.absolutePath()));
-            return *m_database;
+        if(m_dbType == "QSQLITE") {
+            m_database->setDatabaseName(m_conParam.dbPath);
+            m_database->setUserName(m_conParam.userName);
+            m_database->setPassword(m_conParam.password);
+        } else {
+            m_database->setHostName(m_conParam.ip);
+            m_database->setPort(m_conParam.port);
+            m_database->setDatabaseName(m_conParam.databaseName);
+            m_database->setUserName(m_conParam.userName);
+            m_database->setPassword(m_conParam.password);
         }
-        const QString fileName = writeDir.absolutePath() + QString(QDir::separator()) + "situation.db";
-        m_database->setDatabaseName(fileName);
-        m_database->setUserName("admin");
-        m_database->setPassword("123456");
-#else
-        m_database->setHostName(m_conParam.ip);
-        m_database->setPort(m_conParam.port);
-        m_database->setDatabaseName(m_conParam.databaseName);
-        m_database->setUserName(m_conParam.userName);
-        m_database->setPassword(m_conParam.password);
-#endif
+
         if(!m_database->open()) {
             QThread::msleep(200);
             if(!m_database->open()) {

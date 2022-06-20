@@ -15,6 +15,7 @@ public:
 
     DataBaseConParam();
     DataBaseConParam(const DataBaseConParam &that);
+    DataBaseConParam(const QString &dbPath);
     DataBaseConParam(const QString &ip, int port,
                       const QString &databaseName,
                       const QString &userName,
@@ -24,9 +25,11 @@ public:
                   const QString &databaseName,
                   const QString &userName,
                   const QString &password);
+    void setDbPath(const QString &dbPath);
 
     DataBaseConParam& operator = (const DataBaseConParam &that);
 public:
+    QString dbPath; // QSQLITE 时需要设置数据库路径
     QString ip;
     int port;
     QString databaseName;
