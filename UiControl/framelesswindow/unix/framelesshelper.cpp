@@ -402,7 +402,7 @@ void WidgetData::moveWidget(const QPoint& gMousePos)
     {
 #if defined (W_LESSWINDOW_X11)
         SendMove(m_pWidget, Qt::LeftButton);
-#elif
+#else
         m_pWidget->move(gMousePos - m_ptDragPos);
 #endif
     }
@@ -697,7 +697,7 @@ bool LessWindowBase::nativeEventFilter(const QByteArray &eventType, void *messag
 
     if(eventType == "xcb_generic_event_t") {
         xcb_generic_event_t* ev = static_cast<xcb_generic_event_t*>(message);
-        if(ev) {
+        if(ev && ev->pad0 == 0) {
             switch (ev->response_type & ~0x80) {
                 case XCB_REPARENT_WINDOW: { // 目前用此标识判断鼠标释放
                     SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
