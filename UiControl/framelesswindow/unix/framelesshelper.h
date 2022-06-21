@@ -8,11 +8,20 @@
 #include <QMouseEvent>
 #include <QHoverEvent>
 #include <QPainter>
+#include <QApplication>
+#include <QAbstractNativeEventFilter>
 
 class QWidget;
 class QDialog;
 class FramelessHelperPrivate;
 
+///
+/// Use x11 frameless widget(Linux下使用x11无边框方案)
+/// .pro file add:
+/// DEFINES += W_LESSWINDOW_X11
+/// QT += x11extras
+/// LIBS += -lX11 -lXext
+///
 
 /*****
 * CursorPosCalculator
@@ -154,9 +163,16 @@ private:
     bool m_bDbClickTitlebarMax;
 };
 
-class LessWindowBase {
+class LessWindowBase
+#if defined (W_LESSWINDOW_X11)
+    : public QAbstractNativeEventFilter
+#endif
+{
 public:
     LessWindowBase(QWidget *widget): m_widget(widget) {
+#if defined (W_LESSWINDOW_X11)
+    qApp->installNativeEventFilter(this);
+#endif
         m_frHelper = new FramelessHelper(widget);
         m_frHelper->activateOn(widget);
         m_bBorder = false;
@@ -205,6 +221,9 @@ public:
     void addIgnoreWidget(QWidget* widget) {
         Q_UNUSED(widget)
     }
+#if defined (W_LESSWINDOW_X11)
+    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
+#endif
 protected:
     bool m_bBorder; // 是否设置边框（默认不设置）
     QWidget *m_widget;

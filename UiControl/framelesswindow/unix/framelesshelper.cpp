@@ -6,6 +6,76 @@
 #include <QDesktopWidget>
 #include "framelesshelper.h"
 
+#if defined (W_LESSWINDOW_X11)
+///
+/// .pro file add:
+/// DEFINES += W_LESSWINDOW_X11
+/// QT += x11extras
+/// LIBS += -lX11 -lXext
+///
+
+#include <QX11Info>
+#include <X11/Xatom.h>
+#include <X11/Xlib.h>
+//#include <X11/extensions/shape.h>
+
+/// x11 function
+
+void SendMove(const QWidget *widget, Qt::MouseButton qbutton)
+{
+    const auto display = QX11Info::display();
+    const auto screen = QX11Info::appScreen();
+
+    int xbtn = qbutton == Qt::LeftButton ? Button1 :
+               qbutton == Qt::RightButton ? Button3 :
+               AnyButton;
+
+    XEvent xev;
+    memset(&xev, 0, sizeof(xev));
+    const Atom net_move_resize = XInternAtom(display, "_NET_WM_MOVERESIZE", false);
+    xev.xclient.type = ClientMessage;
+    xev.xclient.message_type = net_move_resize;
+    xev.xclient.display = display;
+    xev.xclient.window = widget->winId();
+    xev.xclient.format = 32;
+
+    const auto global_position = QCursor::pos();
+    xev.xclient.data.l[0] = global_position.x();
+    xev.xclient.data.l[1] = global_position.y();
+    xev.xclient.data.l[2] = 8;
+    xev.xclient.data.l[3] = xbtn;
+    xev.xclient.data.l[4] = 0;
+    XUngrabPointer(display, QX11Info::appTime());
+
+    XSendEvent(display,
+               QX11Info::appRootWindow(screen),
+               false,
+               SubstructureRedirectMask | SubstructureNotifyMask,
+               &xev);
+    XFlush(display);
+}
+
+void SendButtonRelease(const QWidget *widget, const QPoint &pos, const QPoint &globalPos)
+{
+    const auto display = QX11Info::display();
+
+    XEvent xevent;
+    memset(&xevent, 0, sizeof(XEvent));
+
+    xevent.type = ButtonRelease;
+    xevent.xbutton.button = Button1;
+    xevent.xbutton.window = widget->effectiveWinId();
+    xevent.xbutton.x = pos.x();
+    xevent.xbutton.y = pos.y();
+    xevent.xbutton.x_root = globalPos.x();
+    xevent.xbutton.y_root = globalPos.y();
+    xevent.xbutton.display = display;
+
+    XSendEvent(display, widget->effectiveWinId(), False, ButtonReleaseMask, &xevent);
+    XFlush(display);
+}
+
+#endif
 
 /*****
  * FramelessHelperPrivate
@@ -330,7 +400,11 @@ void WidgetData::moveWidget(const QPoint& gMousePos)
     }
     else
     {
+#if defined (W_LESSWINDOW_X11)
+        SendMove(m_pWidget, Qt::LeftButton);
+#elif
         m_pWidget->move(gMousePos - m_ptDragPos);
+#endif
     }
 }
 
@@ -615,3 +689,23 @@ bool FramelessHelper::isMax(QWidget *w)
     }
     return false;
 }
+
+#if defined (W_LESSWINDOW_X11)
+bool LessWindowBase::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
+{
+    Q_UNUSED(result)
+
+    if(eventType == "xcb_generic_event_t") {
+        xcb_generic_event_t* ev = static_cast<xcb_generic_event_t*>(message);
+        if(ev) {
+            switch (ev->response_type & ~0x80) {
+                case XCB_REPARENT_WINDOW: { // 目前用此标识判断鼠标释放
+                    SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
+                }
+            }
+            //qDebug() << "nativeEventFilter type: " << (ev->response_type & ~0x80);
+        }
+    }
+    return false;
+};
+#endif
