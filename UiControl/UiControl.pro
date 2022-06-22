@@ -22,6 +22,7 @@ SOURCES += \
     widget.cpp
 
 HEADERS += \
+    framelesswindow/frameless.h \
     framelesswindow/lesstitlebar.h \
     framelesswindow/lesstitlebarbtns.h \
     widget.h

@@ -267,9 +267,9 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
 //双击标题栏
 bool WinLessWindow::dbClickTitleLab(MSG* msg)
 {
-    if(m_bDbClickTitleBarMax) { //双击最大化/正常
+    if(m_bDbClickTitleBarMax && m_titlebar) { //双击最大化/正常
         if (m_widget->isMaximized()) {
-            if(!m_moveEnable){ //m_moveEnable = false时，最大化功能失效; true window 由系统实现最大化、最小化
+            if(!m_moveEnable){ // m_moveEnable = false时，最大化功能失效; true window 由系统实现最大化、最小化
                 //support highdpi
                 long x = GET_X_LPARAM(msg->lParam);
                 long y = GET_Y_LPARAM(msg->lParam);
@@ -279,7 +279,7 @@ bool WinLessWindow::dbClickTitleLab(MSG* msg)
             }
             emit titleDblClick(false);
         } else {
-            if(!m_moveEnable){ //m_moveEnable = false时，全屏功能失效; true window 由系统实现最大化、最小化
+            if(!m_moveEnable){ // m_moveEnable = false时，全屏功能失效; true window 由系统实现最大化、最小化
                 //support highdpi
                 long x = GET_X_LPARAM(msg->lParam);
                 long y = GET_Y_LPARAM(msg->lParam);
