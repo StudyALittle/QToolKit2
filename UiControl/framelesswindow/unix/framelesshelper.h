@@ -70,8 +70,10 @@ public:
     void setTitleBar(QWidget *titleBar);
     void setDbClickTitlebarMax(bool bDbClickTitlebarMax);
 
-    void setMax(bool bMax);
-    bool isMax();
+    void setMax();
+
+    bool isX11Move();
+    void x11MoveRelease();
 private:
     // 更新鼠标样式
     void updateCursorShape(const QPoint &gMousePos);
@@ -105,10 +107,11 @@ private:
     bool m_bLeftButtonPressed;
     bool m_bCursorShapeChanged;
     bool m_bLeftButtonTitlePressed;
-    bool m_bMax;
     QRect m_rect;
     Qt::WindowFlags m_windowFlags;
     bool m_bDbClickTitlebarMax;
+
+    bool m_x11Move; // 使用x11的无边框，保存窗口移动状态
 
     QWidget *m_titleBar;
 };
@@ -149,8 +152,8 @@ public:
     uint borderWidth();
     uint titleHeight();
 
-    void setMax(QWidget *w,bool bMax);
-    bool isMax(QWidget *w);
+    bool isX11Move();
+    void x11MoveRelease();
 protected:
     // 事件过滤，进行移动、缩放等
     virtual bool eventFilter(QObject *obj, QEvent *event);
@@ -161,6 +164,7 @@ signals:
 private:
     FramelessHelperPrivate *d;
     bool m_bDbClickTitlebarMax;
+    QWidget *m_mainWidget;
 };
 
 class LessWindowBase

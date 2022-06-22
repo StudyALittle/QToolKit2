@@ -157,10 +157,10 @@ WidgetData::WidgetData(FramelessHelperPrivate *_d, QWidget *pTopLevelWidget, QOb
     m_bLeftButtonPressed = false;
     m_bCursorShapeChanged = false;
     m_bLeftButtonTitlePressed = false;
-    m_bMax = false;
     m_rect = m_pWidget->geometry();
     m_pRubberBand = NULL;
     m_titleBar = NULL;
+    m_x11Move = false;
 
     m_windowFlags = m_pWidget->windowFlags();
     m_pWidget->setMouseTracking(true);
@@ -234,8 +234,18 @@ void WidgetData::setDbClickTitlebarMax(bool bDbClickTitlebarMax)
     m_bDbClickTitlebarMax = bDbClickTitlebarMax;
 }
 
-void WidgetData::setMax(bool bMax)
+void WidgetData::setMax()
 {
+    bool bMax;
+    if(m_pWidget->isMaximized()){
+        bMax = false;
+        m_pWidget->showNormal();
+    }else {
+        bMax = true;
+        m_pWidget->showMaximized();
+    }
+    emit sigMax(bMax);
+#if 0
     if(m_bMax != bMax)
     {
         if(bMax)
@@ -257,11 +267,20 @@ void WidgetData::setMax(bool bMax)
         m_bMax = bMax;
         emit sigMax(m_bMax);
     }
+#endif
 }
 
-bool WidgetData::isMax()
+bool WidgetData::isX11Move()
 {
-    return m_bMax;
+    return m_x11Move;
+}
+void WidgetData::x11MoveRelease()
+{
+    if(m_x11Move) {
+        m_x11Move = false;
+        m_bLeftButtonPressed = false;
+        m_bLeftButtonTitlePressed = false;
+    }
 }
 
 void WidgetData::updateCursorShape(const QPoint &gMousePos)
@@ -401,6 +420,7 @@ void WidgetData::moveWidget(const QPoint& gMousePos)
     else
     {
 #if defined (W_LESSWINDOW_X11)
+        m_x11Move = true;
         SendMove(m_pWidget, Qt::LeftButton);
 #else
         m_pWidget->move(gMousePos - m_ptDragPos);
@@ -441,6 +461,7 @@ void WidgetData::handleMouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
     {
+        m_x11Move = false;
         m_bLeftButtonPressed = false;
         m_bLeftButtonTitlePressed = false;
         m_pressedMousePos.reset();
@@ -454,7 +475,7 @@ void WidgetData::handleMouseReleaseEvent(QMouseEvent *event)
 
 void WidgetData::handleMouseMoveEvent(QMouseEvent *event)
 {
-    if(m_bMax)
+    if(m_pWidget->isMaximized())
     {
         return;
     }
@@ -464,7 +485,7 @@ void WidgetData::handleMouseMoveEvent(QMouseEvent *event)
         {
             resizeWidget(event->globalPos());
         }
-        else if (d->m_bWidgetMovable && m_bLeftButtonTitlePressed)
+        else if (d->m_bWidgetMovable && m_bLeftButtonTitlePressed && m_titleBar)
         {
             moveWidget(event->globalPos());
         }
@@ -477,12 +498,12 @@ void WidgetData::handleMouseMoveEvent(QMouseEvent *event)
 
 void WidgetData::handleMouseDblClickEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
+    if (event->button() == Qt::LeftButton && m_titleBar)
     {
         if(event->pos().y() < (m_titleBar ? m_titleBar->height() : m_moveMousePos.m_nTitleHeight))
         {
             if(m_bDbClickTitlebarMax)
-                setMax(!m_bMax);
+                setMax();
         }
     }
 }
@@ -498,7 +519,7 @@ void WidgetData::handleLeaveEvent(QEvent *event)
 
 void WidgetData::handleHoverMoveEvent(QHoverEvent *event)
 {
-    if(m_bMax)
+    if(m_pWidget->isMaximized())
     {
         return;
     }
@@ -514,6 +535,7 @@ FramelessHelper::FramelessHelper(QObject *parent)
       d(new FramelessHelperPrivate())
 {
     m_bDbClickTitlebarMax = true;
+    m_mainWidget = nullptr;
     d->m_bWidgetMovable = true;
     d->m_bWidgetResizable = true;
     d->m_bRubberBandOnResize = false;
@@ -575,6 +597,7 @@ bool FramelessHelper::eventFilter(QObject *obj, QEvent *event)
 
 void FramelessHelper::activateOn(QWidget *topLevelWidget)
 {
+    m_mainWidget = topLevelWidget;
     if (!d->m_widgetDataHash.contains(topLevelWidget))
     {
         WidgetData *data = new WidgetData(d, topLevelWidget);
@@ -671,23 +694,19 @@ uint FramelessHelper::titleHeight()
     return CursorPosCalculator::m_nTitleHeight;
 }
 
-void FramelessHelper::setMax(QWidget *w,bool bMax)
+bool FramelessHelper::isX11Move()
 {
-    WidgetData* data = d->m_widgetDataHash[w];
-    if(data)
-    {
-        data->setMax(bMax);
+    if (!d->m_widgetDataHash.contains(m_mainWidget)) {
+        return false;
     }
+    return d->m_widgetDataHash.value(m_mainWidget)->isX11Move();
 }
-
-bool FramelessHelper::isMax(QWidget *w)
+void FramelessHelper::x11MoveRelease()
 {
-    WidgetData* data = d->m_widgetDataHash[w];
-    if(data)
-    {
-        return data->isMax();
+    if (!d->m_widgetDataHash.contains(m_mainWidget)) {
+        return;
     }
-    return false;
+    d->m_widgetDataHash.value(m_mainWidget)->x11MoveRelease();
 }
 
 #if defined (W_LESSWINDOW_X11)
@@ -697,14 +716,18 @@ bool LessWindowBase::nativeEventFilter(const QByteArray &eventType, void *messag
 
     if(eventType == "xcb_generic_event_t") {
         xcb_generic_event_t* ev = static_cast<xcb_generic_event_t*>(message);
-        if(ev && ev->pad0 == 0) {
-            switch (ev->response_type & ~0x80) {
-                case XCB_REPARENT_WINDOW: { // 目前用此标识判断鼠标释放
-                    SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
-                }
-            }
-            //qDebug() << "nativeEventFilter type: " << (ev->response_type & ~0x80);
+        if(ev && (ev->response_type & ~0x80) == 85 && m_frHelper->isX11Move()) {
+            m_frHelper->x11MoveRelease();
+            SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
         }
+//        if(ev && ev->pad0 == 0) {
+//            switch (ev->response_type & ~0x80) {
+//                case XCB_REPARENT_WINDOW: { // 目前用此标识判断鼠标释放
+//                    SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
+//                }
+//            }
+//            //qDebug() << "nativeEventFilter type: " << (ev->response_type & ~0x80);
+//        }
     }
     return false;
 };
