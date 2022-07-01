@@ -26,8 +26,8 @@ public:
     int sendCut(const QByteArray &data,
                    const QString &ip, quint16 port,
                  ushort frameType,
-                 uchar sendAdd = 0x00,
-                 uchar recvAdd = 0x00,
+                 uchar condense1 = 0x00,
+                 uchar condense2 = 0x00,
                  uint *frameId = nullptr,
                  uint *unRest = nullptr, bool bCut = true, const uchar *cFrameId = nullptr);
 

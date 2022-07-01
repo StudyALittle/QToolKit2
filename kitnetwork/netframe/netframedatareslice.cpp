@@ -17,8 +17,8 @@ NetFrameDataReslice::NetFrameDataReslice()
 ///
 QList<std::shared_ptr<QByteArray> > NetFrameDataReslice::splitFrame(const QByteArray &data,
                                                                     ushort frameType,
-                                                                    uchar sendAdd,
-                                                                    uchar recvAdd,
+                                                                    uchar condense1,
+                                                                    uchar condense2,
                                                                     uint &frameId,
                                                                     uint *unRest,
                                                                     bool bCut,
@@ -35,8 +35,8 @@ QList<std::shared_ptr<QByteArray> > NetFrameDataReslice::splitFrame(const QByteA
 
     NetFrameHead frame;
     frame.usFrameH = 0xAAAA; /** 帧头标识**/
-    frame.ucRxAddr = recvAdd;      /** 接收方地址**/
-    frame.ucTxAddr = sendAdd;      /** 发送方地址**/
+    frame.condense[0] = condense1;      /** 是否压缩**/
+    frame.condense[1] = condense2;      /** 压缩算法**/
     frame.usFrameID = frameType;     /** 信息标识(标识数据类型) **/
     // 服务端发送数据时，可能需要把客户端携带的ID传回去
     if(cFrameId) {

@@ -65,9 +65,8 @@ struct FrameItem {
             isSameEndien = (isDataBigEndien == DataUtil::isBigEndien());
             if(!isSameEndien) { // 字节模式与本机不一样
                 DataUtil::cBinaryToNumber<ushort>(frame->frameHead.usFrameH, data, pos, isSameEndien);
+                DataUtil::cBinaryToChart<uchar>(frame->frameHead.condense, data, pos, 2, isSameEndien);
                 DataUtil::cBinaryToNumber<uint>(frame->frameHead.unFrameLen, data, pos, isSameEndien);
-                DataUtil::cBinaryToChart<uchar>(&(frame->frameHead.ucRxAddr), data, pos, 1, isSameEndien);
-                DataUtil::cBinaryToChart<uchar>(&(frame->frameHead.ucTxAddr), data, pos, 1, isSameEndien);
                 DataUtil::cBinaryToNumber<ushort>(frame->frameHead.usFrameN, data, pos, isSameEndien);
                 DataUtil::cBinaryToNumber<ushort>(frame->frameHead.usFrameNumber, data, pos, isSameEndien);
                 DataUtil::cBinaryToNumber<ushort>(frame->frameHead.usFrameID, data, pos, isSameEndien);
@@ -331,8 +330,8 @@ public:
     ///
     QList<std::shared_ptr<QByteArray> > splitFrame(const QByteArray &data,
                                                    ushort frameType,
-                                                   uchar sendAdd,
-                                                   uchar recvAdd,
+                                                   uchar condense1,
+                                                   uchar condense2,
                                                    uint &frameId,
                                                    uint *unRest = nullptr,
                                                    bool bCut = true,

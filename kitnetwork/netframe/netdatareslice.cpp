@@ -29,13 +29,11 @@ NetDataReslice::NetDataReslice(TcpClient *tcpClient):
 ///
 int NetDataReslice::sendCut(const QByteArray &data,
                const QString &ip, quint16 port,
-             ushort frameType,
-             uchar sendAdd,
-            uchar recvAdd, uint *frameId, uint *unRest, bool bCut, const uchar *cFrameId)
+             ushort frameType, uchar condense1, uchar condense2, uint *frameId, uint *unRest, bool bCut, const uchar *cFrameId)
 {
     uint id = 0;
     int sendLen = 0;
-    auto listData = m_reslice.splitFrame(data, frameType, sendAdd, recvAdd, id, unRest, bCut, cFrameId);
+    auto listData = m_reslice.splitFrame(data, frameType, condense1, condense2, id, unRest, bCut, cFrameId);
     for(std::shared_ptr<QByteArray> item: listData) {
         if(m_udpServer)
             sendLen += m_udpServer->writeDataToServer(*item, ip, port);

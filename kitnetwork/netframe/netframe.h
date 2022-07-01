@@ -12,15 +12,14 @@ namespace wkit {
 struct NetFrameHead
 {
     unsigned short usFrameH;      /** 帧头标识**/
-    unsigned int   unFrameLen;    /** 帧长度  **/
-    unsigned char  ucRxAddr;      /** 保留**/
-    unsigned char  ucTxAddr;      /** 保留**/
+    unsigned char  condense[2];   /** 压缩[0]: 数据是否压缩; [1]: 压缩算法 **/
+    unsigned int   unFrameLen;    /** 帧长度（头+数据长度）**/
     unsigned short usFrameN;      /** 数据包数**/
     unsigned short usFrameNumber; /** 包序号**/
     unsigned short usFrameID;     /** 信息标识(标识数据类型) **/
     unsigned char  gcInfo[8];     /** 帧标识号（帧标识ID）**/
     unsigned short usRest;        /** 大小端**/
-    unsigned int   unGroupLen;    /** 帧体长度**/
+    unsigned int   unGroupLen;    /** 帧体长度(携带数据的长度)**/
     unsigned int   unFrameOffset; /** 偏移量**/
 
     NetFrameHead() {

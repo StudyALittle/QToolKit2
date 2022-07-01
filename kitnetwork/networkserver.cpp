@@ -88,8 +88,8 @@ qint64 NetworkServer::sendData(const QByteArray &param, std::shared_ptr<Session>
 {
     QHostAddress addr(session->ip);
     int nr = m_netDataReslice->sendCut(param, addr.toString(), session->port,
-                                       session->head->usFrameID, session->head->ucRxAddr,
-                                       session->head->ucTxAddr, nullptr, nullptr, bCut,
+                                       session->head->usFrameID, session->head->condense[0],
+                                       session->head->condense[1], nullptr, nullptr, bCut,
                                        bAutoId ? nullptr : session->head->gcInfo);
     return nr;
 }
