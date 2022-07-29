@@ -1,5 +1,7 @@
 ﻿#include "widget.h"
 #include "ui_widget.h"
+#include "dialog.h"
+#include <QMessageBox>
 
 Widget::Widget(QWidget *parent)
     : WidgetLessWindow(parent)
@@ -27,4 +29,16 @@ Widget::Widget(QWidget *parent)
 Widget::~Widget()
 {
     delete ui;
+}
+
+void Widget::on_pushButton_clicked()
+{
+    Dialog dl(this);
+    dl.Exec();
+    //resetWidget();
+}
+
+void Widget::on_pushButton_2_clicked()
+{
+    QMessageBox::information(this, "test", "test");
 }

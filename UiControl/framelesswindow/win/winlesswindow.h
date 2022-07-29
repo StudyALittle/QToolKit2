@@ -6,6 +6,10 @@
 #include <QMargins>
 #include <QPoint>
 #include <QDialog>
+#include <QPainter>
+#include <QLayout>
+#include <QEvent>
+#include <QAbstractNativeEventFilter>
 #include <windows.h>
 
 class WinLessWindow: public QObject
@@ -14,6 +18,8 @@ class WinLessWindow: public QObject
 public:
     WinLessWindow();
     void setWidget(QWidget *widget);
+
+    void resetWidget();
 
     //设置是否可以通过鼠标调整窗口大小
     void setResizeEnable(bool resizeable=true);
@@ -81,7 +87,10 @@ class WinLessBase
 public:
     WinLessBase(QWidget *widget) {
         m_lessWin.setWidget(widget);
+        m_widget = widget;
     }
+
+    void resetWidget() { m_lessWin.resetWidget(); }
 
     //设置是否可以通过鼠标调整窗口大小
     void setResizeEnable(bool resizeable) { m_lessWin.setResizeEnable(resizeable); };
@@ -102,33 +111,81 @@ public:
     //要解决此问题，使用addIgnoreWidget(label1)
     void addIgnoreWidget(QWidget* widget) { m_lessWin.addIgnoreWidget(widget); }
     // windows无效
-    void setDrawBorder(bool bBorder) { Q_UNUSED(bBorder) }
+    void setDrawBorder(bool bBorder) {
+        m_bBorder = bBorder;
+        // 设置边距，画边框
+        int cMg = 1;
+        m_widget->setContentsMargins(cMg, cMg + 1, cMg, cMg);
+        if(bBorder) {
+            QLayout *layout = m_widget->layout();
+            if(layout) {
+                layout->setContentsMargins(cMg, cMg + 1, cMg, cMg);
+            }
+        }
+    }
 protected:
     bool NativeEvent(const QByteArray &eventType, void *message, long *result) {
         return m_lessWin.NativeEvent(eventType, message, result);
     }
     WinLessWindow m_lessWin;
+    bool m_bBorder; // 是否设置边框（默认不设置）
+    QWidget *m_widget;
+};
+#include <QDebug>
+
+class WidgetEx: public QWidget {
+public:
+    WidgetEx(QWidget *parent = nullptr) {
+        setProperty("WinLess_type", Qt::Widget);
+        if(parent) setParent(parent);
+    }
 };
 
-class WidgetLessWindow: public QWidget, public WinLessBase
+class WidgetLessWindow: public WidgetEx, public WinLessBase
 {
     Q_OBJECT
 public:
     WidgetLessWindow(QWidget *parent = nullptr):
-         QWidget(parent), WinLessBase(this) {
+         WidgetEx(parent), WinLessBase(this) {
+        setProperty("WinLess_type", Qt::Widget);
         connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
     }
 signals:
     //bMax: true（最大化） false(最小化)
     void titleDblClick(bool bMax = true);
 protected:
-    bool nativeEvent(const QByteArray &eventType, void *message, long *result) {
+    bool event(QEvent *ev) override {
+        switch (ev->type()) {
+        case QEvent::WinIdChange:
+        case QEvent::ChildAdded: {
+            qDebug() << "ev type : " <<  ev->type();
+
+//            auto childes = children();
+//            for(auto *obj: childes) {
+//                bool bOk;
+//                int type = obj->property("WinLess_type").toInt(&bOk);
+//                if(bOk && (type == Qt::Dialog || type == Qt::Widget)) {
+//                    //resetWidget();
+//                    qDebug() << "ev type : " <<  ev->type();
+//                }
+//            }
+        }
+        default:
+            break;
+
+        }
+        return QWidget::event(ev);
+    }
+
+    bool nativeEvent(const QByteArray &eventType, void *message, long *result) override {
         //Workaround for known bug -> check Qt forum : https://forum.qt.io/topic/93141/qtablewidget-itemselectionchanged/13
         #if (QT_VERSION == QT_VERSION_CHECK(5, 11, 1))
         MSG* msg = *reinterpret_cast<MSG**>(message);
         #else
         MSG* msg = reinterpret_cast<MSG*>(message);
         #endif
+
+        // qDebug() << "msg type: " << msg->message;
 
         switch (msg->message)
         {
@@ -146,21 +203,45 @@ protected:
             return QWidget::nativeEvent(eventType, message, result);
         }
     }
+
+    void paintEvent(QPaintEvent *event) override {
+        if(!m_bBorder/* || isMaximized()*/) {
+            return QWidget::paintEvent(event);
+        }
+
+        /// 画边框
+        QRect rt = rect();
+        rt.setY(1);
+        rt.setWidth(width() - 1);
+        rt.setHeight(height() - 2);
+        QPainter painter(this);
+        painter.setPen("gray");
+        painter.drawRect(rt);
+        return QWidget::paintEvent(event);
+    }
 };
 
-class DialogLessWindow: public QDialog, public WinLessBase
+class DialogEx: public QDialog {
+public:
+    DialogEx(QWidget *parent = nullptr) {
+        setProperty("WinLess_type", Qt::Dialog);
+        if(parent) setParent(parent);
+    }
+};
+
+class DialogLessWindow: public DialogEx, public WinLessBase
 {
     Q_OBJECT
 public:
     DialogLessWindow(QWidget *parent = nullptr):
-         QDialog(parent), WinLessBase(this) {
+         DialogEx(parent), WinLessBase(this) {
         connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
     }
 signals:
     //bMax: true（最大化） false(最小化)
     void titleDblClick(bool bMax = true);
 protected:
-    bool nativeEvent(const QByteArray &eventType, void *message, long *result) {
+    bool nativeEvent(const QByteArray &eventType, void *message, long *result) override {
         //Workaround for known bug -> check Qt forum : https://forum.qt.io/topic/93141/qtablewidget-itemselectionchanged/13
         #if (QT_VERSION == QT_VERSION_CHECK(5, 11, 1))
         MSG* msg = *reinterpret_cast<MSG**>(message);
@@ -183,6 +264,22 @@ protected:
         default:
             return QDialog::nativeEvent(eventType, message, result);
         }
+    }
+
+    void paintEvent(QPaintEvent *event) override {
+        if(!m_bBorder/* || isMaximized()*/) {
+            return QWidget::paintEvent(event);
+        }
+
+        /// 画边框
+        QRect rt = rect();
+        rt.setY(1);
+        rt.setWidth(width() - 1);
+        rt.setHeight(height() - 2);
+        QPainter painter(this);
+        painter.setPen("gray");
+        painter.drawRect(rt);
+        return QWidget::paintEvent(event);
     }
 };
 

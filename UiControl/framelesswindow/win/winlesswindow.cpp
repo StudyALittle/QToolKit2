@@ -1,5 +1,6 @@
 ﻿#include "winlesswindow.h"
 
+#include <QApplication>
 #include <WinUser.h>
 #include <windowsx.h>
 #include <dwmapi.h>
@@ -15,6 +16,15 @@ WinLessWindow::WinLessWindow()
 }
 void WinLessWindow::setWidget(QWidget *widget)
 {
+    static bool s_initNative = false;
+    if(!s_initNative)  {
+        // 防止窗口 Native化
+        QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+        QApplication::setAttribute(Qt::AA_NativeWindows,false);
+        s_initNative = true;
+    }
+
+    widget->setAttribute(Qt::WA_DontCreateNativeAncestors);
     m_widget = widget;
     m_bDbClickTitleBarMax = true;
     m_bResizeable = true;
@@ -23,6 +33,10 @@ void WinLessWindow::setWidget(QWidget *widget)
     m_borderWidthTmp = m_borderWidth;
     m_titlebar = nullptr;
     m_widget->setWindowFlags(m_widget->windowFlags() | Qt::Window | Qt::FramelessWindowHint | Qt::WindowSystemMenuHint);
+    setResizeEnable(m_bResizeable);
+}
+
+void WinLessWindow::resetWidget() {
     setResizeEnable(m_bResizeable);
 }
 
