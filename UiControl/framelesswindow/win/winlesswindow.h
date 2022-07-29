@@ -131,52 +131,19 @@ protected:
     bool m_bBorder; // 是否设置边框（默认不设置）
     QWidget *m_widget;
 };
-#include <QDebug>
 
-class WidgetEx: public QWidget {
-public:
-    WidgetEx(QWidget *parent = nullptr) {
-        setProperty("WinLess_type", Qt::Widget);
-        if(parent) setParent(parent);
-    }
-};
-
-class WidgetLessWindow: public WidgetEx, public WinLessBase
+class WidgetLessWindow: public QWidget, public WinLessBase
 {
     Q_OBJECT
 public:
     WidgetLessWindow(QWidget *parent = nullptr):
-         WidgetEx(parent), WinLessBase(this) {
-        setProperty("WinLess_type", Qt::Widget);
+         QWidget(parent), WinLessBase(this) {
         connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
     }
 signals:
     //bMax: true（最大化） false(最小化)
     void titleDblClick(bool bMax = true);
 protected:
-    bool event(QEvent *ev) override {
-        switch (ev->type()) {
-        case QEvent::WinIdChange:
-        case QEvent::ChildAdded: {
-            qDebug() << "ev type : " <<  ev->type();
-
-//            auto childes = children();
-//            for(auto *obj: childes) {
-//                bool bOk;
-//                int type = obj->property("WinLess_type").toInt(&bOk);
-//                if(bOk && (type == Qt::Dialog || type == Qt::Widget)) {
-//                    //resetWidget();
-//                    qDebug() << "ev type : " <<  ev->type();
-//                }
-//            }
-        }
-        default:
-            break;
-
-        }
-        return QWidget::event(ev);
-    }
-
     bool nativeEvent(const QByteArray &eventType, void *message, long *result) override {
         //Workaround for known bug -> check Qt forum : https://forum.qt.io/topic/93141/qtablewidget-itemselectionchanged/13
         #if (QT_VERSION == QT_VERSION_CHECK(5, 11, 1))
@@ -184,8 +151,6 @@ protected:
         #else
         MSG* msg = reinterpret_cast<MSG*>(message);
         #endif
-
-        // qDebug() << "msg type: " << msg->message;
 
         switch (msg->message)
         {
@@ -221,20 +186,12 @@ protected:
     }
 };
 
-class DialogEx: public QDialog {
-public:
-    DialogEx(QWidget *parent = nullptr) {
-        setProperty("WinLess_type", Qt::Dialog);
-        if(parent) setParent(parent);
-    }
-};
-
-class DialogLessWindow: public DialogEx, public WinLessBase
+class DialogLessWindow: public QDialog, public WinLessBase
 {
     Q_OBJECT
 public:
     DialogLessWindow(QWidget *parent = nullptr):
-         DialogEx(parent), WinLessBase(this) {
+         QDialog(parent), WinLessBase(this) {
         connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
     }
 signals:
