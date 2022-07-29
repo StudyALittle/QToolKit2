@@ -45,10 +45,10 @@ qint64 TcpServer::writeData(const QByteArray &data, quint32 ipv4, quint16 port)
     if(!client)
         return 0;
     /// 同一个线程直接发送数据（qtsocket 不支持跨线程发送数据）
-    if(client->thisThread() == QThread::currentThread())
-        return client->writeData(data);
-    emit sigWriteToClient(data);
-    return data.size();
+    // if(client->thisThread() == QThread::currentThread())
+    return client->writeData(data);
+    // emit sigWriteToClient(data);
+    // return data.size();
 }
 qint64 TcpServer::writeData(const QByteArray &data, const QString &ipv4, quint16 port)
 {
@@ -79,7 +79,7 @@ void TcpServer::onNewConnection()
     auto client = std::make_shared<TcpClient>(socket, ipv4, port);
     connect(client.get(), &TcpClient::readDataFinish, this, &TcpServer::readDataFinish);
     connect(client.get(), &TcpClient::disconnected, this, &TcpServer::onDisconnected);
-    connect(this, &TcpServer::sigWriteToClient, client.get(), &TcpClient::onWriteData, Qt::QueuedConnection);
+    // connect(this, &TcpServer::sigWriteToClient, client.get(), &TcpClient::onWriteData, Qt::QueuedConnection);
 
     QMutexLocker locker(&m_mutexClients);
     if(m_clients.contains(ipv4)) {

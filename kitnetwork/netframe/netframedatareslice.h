@@ -17,7 +17,7 @@
 #include "datautil/datautil.h"
 
 // 分包大小
-#define FRAME_MAX_SPLITE_SIZE 1024
+#define FRAME_MAX_SPLITE_SIZE 1024*50
 // 组包超时数据处理(ms) , 丢弃时间段为重组完成的数据
 #define FRAME_MAX_SPLITETIMESPACE_SIZE 1000*60
 // 缓存最大数据大小200M
