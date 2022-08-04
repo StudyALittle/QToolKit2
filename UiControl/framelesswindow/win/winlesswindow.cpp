@@ -138,7 +138,8 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
     {
     case WM_NCACTIVATE:
     {
-        if(msg->wParam  ==  FALSE)
+        //this kills the window frame and title bar we added with WS_THICKFRAME and WS_CAPTION
+        if(msg->wParam == FALSE)
         {
             *result = TRUE;
         }
@@ -150,17 +151,19 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
         if (params.rgrc[0].top != 0)
             params.rgrc[0].top -= 1;
 
-        //this kills the window frame and title bar we added with WS_THICKFRAME and WS_CAPTION
         *result = WVR_REDRAW;
         return true;
     }
-    case WM_NCRBUTTONDBLCLK: {
+    case WM_NCRBUTTONDBLCLK:
+    {
         return false;
     }
-    case WM_NCLBUTTONDBLCLK:{
+    case WM_NCLBUTTONDBLCLK:
+    {
         return dbClickTitleLab(msg);
     }
-    case WM_LBUTTONDBLCLK:{
+    case WM_LBUTTONDBLCLK:
+    {
         return dbClickTitleLab(msg);
     }
     case WM_NCHITTEST:
