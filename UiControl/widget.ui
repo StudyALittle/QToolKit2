@@ -54,6 +54,9 @@
    </item>
    <item>
     <widget class="QWidget" name="widget_2" native="true">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <widget class="QPushButton" name="pushButton">
       <property name="geometry">
        <rect>

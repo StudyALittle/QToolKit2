@@ -33,7 +33,7 @@ Widget::~Widget()
 
 void Widget::on_pushButton_clicked()
 {
-    Dialog dl;
+    Dialog dl(this);
     dl.setStyleSheet("background-color: rgb(48, 45, 153);");
     dl.Exec();
     //resetWidget();
@@ -50,7 +50,7 @@ void Widget::on_pushButton_3_clicked()
     if(!wd) {
         wd = new Widget;
     }
-    wd->show();
+    wd->showFullScreen();
 }
 
 void Widget::on_pushButton_4_clicked()

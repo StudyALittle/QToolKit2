@@ -1,6 +1,7 @@
 ﻿#include "winlesswindow.h"
 
 #include <QApplication>
+#include <QStyle>
 #include <WinUser.h>
 #include <windowsx.h>
 #include <dwmapi.h>
@@ -13,6 +14,7 @@
 WinLessWindow::WinLessWindow()
 {
     m_bBorder = false;
+    m_bMax = false;
 }
 void WinLessWindow::setWidget(QWidget *widget)
 {
@@ -148,8 +150,29 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
     case WM_NCCALCSIZE:
     {
         NCCALCSIZE_PARAMS& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
-        if (params.rgrc[0].top != 0)
-            params.rgrc[0].top -= 1;
+
+        if(::IsZoomed(msg->hwnd)) {
+#if 1
+            // 修正最大化时内容超出屏幕问题
+            auto monitor = MonitorFromWindow(msg->hwnd, MONITOR_DEFAULTTONEAREST);
+            MONITORINFO info;
+            info.cbSize = sizeof(MONITORINFO);
+            if(GetMonitorInfo(monitor, &info)) {
+                const auto workRect = info.rcWork;
+                params.rgrc[0].left = qMax(params.rgrc[0].left, long(workRect.left));
+                params.rgrc[0].top = qMax(params.rgrc[0].top, long(workRect.top));
+                params.rgrc[0].right = qMin(params.rgrc[0].right, long(workRect.right));
+                params.rgrc[0].bottom = qMin(params.rgrc[0].bottom, long(workRect.bottom));
+            }
+#endif
+        } else {
+            // sz->rgrc[0] 的值必须跟原来的不同, 否则拉伸左/上边框缩放窗口时, 会导致右/下侧出现空白区域 (绘制抖动)
+            // 窗口下边框失去1像素对视觉影响最小, 因此底部减少1像素
+            params.rgrc[0].bottom += 1;
+        }
+
+//        if (params.rgrc[0].top != 0)
+//            params.rgrc[0].top -= 1;
 
         *result = WVR_REDRAW;
         return true;
@@ -265,6 +288,13 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
     case WM_GETMINMAXINFO:
     {
         if (::IsZoomed(msg->hwnd)) {
+            m_bMax = true;
+        } else {
+            m_bMax = false;
+        }
+        return false;
+#if 0
+        if (::IsZoomed(msg->hwnd)) {
             RECT frame = { 0, 0, 0, 0 };
             AdjustWindowRectEx(&frame, WS_OVERLAPPEDWINDOW, FALSE, 0);
 
@@ -290,6 +320,7 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
             }
         }
         return false;
+#endif
     }
     case WM_NCLBUTTONUP:{
         return false;

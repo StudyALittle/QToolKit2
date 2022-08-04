@@ -15,6 +15,9 @@ class QWidget;
 class QDialog;
 class FramelessHelperPrivate;
 
+/// 无边框窗口边框颜色
+#define FL_WIDGET_BODER_COLOR "gray"
+
 ///
 /// Use x11 frameless widget(Linux下使用x11无边框方案)
 /// .pro file add:
@@ -187,6 +190,16 @@ public:
         m_frHelper = 0;
     }
 
+    static void drawWidgetBorder(QWidget *widget) {
+        /// 画边框
+        QRect rt = widget->rect();
+        rt.setWidth(widget->width() - 1);
+        rt.setHeight(widget->height() - 1);
+        QPainter painter(widget);
+        painter.setPen(FL_WIDGET_BODER_COLOR);
+        painter.drawRect(rt);
+    }
+
     // 设置是否画边框，无边框在linux下无阴影，需要画边框
     void setDrawBorder(bool bBorder) {
         m_bBorder = bBorder;
@@ -250,12 +263,7 @@ protected:
         }
 
         /// 画边框
-        QRect rt = rect();
-        rt.setWidth(width() - 1);
-        rt.setHeight(height() - 1);
-        QPainter painter(this);
-        painter.setPen("gray");
-        painter.drawRect(rt);
+        drawWidgetBorder(this);
         return QWidget::paintEvent(event);
     }
 signals:
@@ -278,12 +286,7 @@ protected:
         }
 
         /// 画边框
-        QRect rt = rect();
-        rt.setWidth(width() - 1);
-        rt.setHeight(height() - 1);
-        QPainter painter(this);
-        painter.setPen("gray");
-        painter.drawRect(rt);
+        drawWidgetBorder(this);
         return QDialog::paintEvent(event);
     }
 signals:

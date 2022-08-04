@@ -12,12 +12,18 @@
 #include <QAbstractNativeEventFilter>
 #include <windows.h>
 
+/// 无边框窗口边框颜色
+#define FL_WIDGET_BODER_COLOR "gray"
+
 class WinLessWindow: public QObject
 {
     Q_OBJECT
 public:
     WinLessWindow();
     void setWidget(QWidget *widget);
+
+    void setMax(bool bMax) { m_bMax = bMax; }
+    bool isMax() { return m_bMax; }
 
     void resetWidget();
 
@@ -81,6 +87,7 @@ private:
     bool m_bDbClickTitleBarMax; //点击标题栏是否最大化
     QWidget* m_toolbox;
     QPoint m_pos;
+    bool m_bMax;
 
     bool m_bBorder;
 };
@@ -96,8 +103,20 @@ public:
         m_widget = widget;
     }
 
+    static void drawWidgetBorder(QWidget *widget) {
+        /// 画边框
+        QRect rt = widget->rect();
+        rt.setWidth(widget->width() - 1);
+        rt.setHeight(widget->height() - 2);
+        QPainter painter(widget);
+        painter.setPen(FL_WIDGET_BODER_COLOR);
+        painter.drawRect(rt);
+    }
+
     void resetWidget() { m_lessWin.resetWidget(); }
 
+    void setMax(bool bMax) { m_lessWin.setMax(bMax); }
+    bool isMax() { return m_lessWin.isMax(); }
     //设置是否可以通过鼠标调整窗口大小
     void setResizeEnable(bool resizeable) { m_lessWin.setResizeEnable(resizeable); };
     bool isResizeable(){ return m_lessWin.isResizeable(); }
@@ -123,13 +142,20 @@ public:
         // 设置边距，画边框
         if(bBorder) {
             int cMg = 1;
-            m_widget->setContentsMargins(cMg, cMg + 1, cMg, cMg);
-
             QLayout *layout = m_widget->layout();
             if(layout) {
-                layout->setContentsMargins(cMg, cMg + 1, cMg, cMg);
+                layout->setContentsMargins(cMg, cMg, cMg, cMg + 1);
+            } else {
+                m_widget->setContentsMargins(cMg, cMg, cMg, cMg);
             }
         }
+    }
+
+    bool canDrawBorder() {
+        if(!m_bBorder || isMax()/* || m_widget->windowState() == Qt::WindowFullScreen*/)
+            return false;
+        else
+            return true;
     }
 protected:
     bool NativeEvent(const QByteArray &eventType, void *message, long *result) {
@@ -146,7 +172,7 @@ class WidgetLessWindow: public QWidget, public WinLessBase
 public:
     WidgetLessWindow(QWidget *parent = nullptr):
          QWidget(parent), WinLessBase(this) {
-        connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
+         connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
     }
 signals:
     //bMax: true（最大化） false(最小化)
@@ -179,18 +205,13 @@ protected:
     }
 
     void paintEvent(QPaintEvent *event) override {
-        if(!m_bBorder/* || isMaximized()*/) {
+        if(!canDrawBorder()) {
+            // 不画边框
             return QWidget::paintEvent(event);
         }
 
         /// 画边框
-        QRect rt = rect();
-        rt.setY(1);
-        rt.setWidth(width() - 1);
-        rt.setHeight(height() - 2);
-        QPainter painter(this);
-        painter.setPen("gray");
-        painter.drawRect(rt);
+        drawWidgetBorder(this);
         return QWidget::paintEvent(event);
     }
 };
@@ -201,6 +222,7 @@ class DialogLessWindow: public QDialog, public WinLessBase
 public:
     DialogLessWindow(QWidget *parent = nullptr):
          QDialog(parent), WinLessBase(this) {
+        m_bActive = true;
         connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
     }
 signals:
@@ -217,7 +239,12 @@ protected:
 
         switch (msg->message)
         {
-        case WM_NCACTIVATE:
+        case WM_NCACTIVATE: {
+//            if(m_widget && m_widget->windowType() == Qt::Dialog && m_widget->parent()) {
+//                m_bActive = msg->wParam; // FALSE 模态窗口失去焦点
+//                update();
+//            }
+        }
         case WM_NCCALCSIZE:
         case WM_NCRBUTTONDBLCLK:
         case WM_NCLBUTTONDBLCLK:
@@ -234,20 +261,40 @@ protected:
     }
 
     void paintEvent(QPaintEvent *event) override {
-        if(!m_bBorder/* || isMaximized()*/) {
-            return QWidget::paintEvent(event);
+#if 0
+        if(!m_bActive) {
+//            QRect rt = rect();
+//            rt.setY(1);
+//            rt.setWidth(width() - 1);
+//            rt.setHeight(height() - 2);
+//            QPainter painter(this);
+//            painter.setPen("red");
+//            painter.drawRect(rt);
+
+            PFLASHWINFO fInfo = new FLASHWINFO();
+            fInfo->cbSize = sizeof (FLASHWINFO);// Convert.ToUInt32(Marshal.SizeOf(fInfo));
+            fInfo->hwnd = (HWND)winId();//要闪烁的窗口的句柄，该窗口可以是打开的或最小化的
+            fInfo->dwFlags = (uint)FLASHW_ALL;//闪烁的类型
+            fInfo->uCount = 3;//闪烁窗口的次数
+            fInfo->dwTimeout = 0; //窗口闪烁的频度，毫秒为单位；若该值为0，则为默认图标的闪烁频度
+            FlashWindowEx(fInfo);
+
+            // FlashWindow((HWND)winId(), true);
+        }
+#endif
+
+        if(!canDrawBorder()) {
+            // 不画边框
+            return QDialog::paintEvent(event);
         }
 
         /// 画边框
-        QRect rt = rect();
-        rt.setY(1);
-        rt.setWidth(width() - 1);
-        rt.setHeight(height() - 2);
-        QPainter painter(this);
-        painter.setPen("gray");
-        painter.drawRect(rt);
-        return QWidget::paintEvent(event);
+        drawWidgetBorder(this);
+        return QDialog::paintEvent(event);
     }
+
+private:
+    bool m_bActive;
 };
 
 #endif // WINLESSWINDOW_H
