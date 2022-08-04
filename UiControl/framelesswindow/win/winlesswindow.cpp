@@ -12,7 +12,7 @@
 
 WinLessWindow::WinLessWindow()
 {
-
+    m_bBorder = false;
 }
 void WinLessWindow::setWidget(QWidget *widget)
 {
@@ -26,6 +26,7 @@ void WinLessWindow::setWidget(QWidget *widget)
 
     widget->setAttribute(Qt::WA_DontCreateNativeAncestors);
     m_widget = widget;
+    m_bJustMaximized = true;
     m_bDbClickTitleBarMax = true;
     m_bResizeable = true;
     m_moveEnable = true;
@@ -63,12 +64,26 @@ void WinLessWindow::setResizeEnable(bool resizeable)
     }
 
     //保留一个像素的边框宽度，否则系统不会绘制边框阴影
-    //
     //we better left 1 piexl width of border untouch, so OS can draw nice shadow around it
-    const MARGINS shadow = { 1, 1, 1, 1 };
-    DwmExtendFrameIntoClientArea(HWND(m_widget->winId()), &shadow);
+    if(!m_bBorder) { // 不画边框时，绘制系统阴影
+        const MARGINS shadow = { 1, 1, 1, 1 };
+        DwmExtendFrameIntoClientArea(HWND(m_widget->winId()), &shadow);
+    }
 
     m_widget->setVisible(visible);
+}
+
+// 设置是否画边框
+void WinLessWindow::setDrawBorder(bool bDrawBorder)
+{
+    m_bBorder = bDrawBorder;
+    if(!m_bBorder) { // 不画边框时，绘制系统阴影
+        const MARGINS shadow = { 1, 1, 1, 1 };
+        DwmExtendFrameIntoClientArea(HWND(m_widget->winId()), &shadow);
+    } else {
+        const MARGINS shadow = { 0, 0, 0, 0 };
+        DwmExtendFrameIntoClientArea(HWND(m_widget->winId()), &shadow);
+    }
 }
 
 void WinLessWindow::setResizeableAreaWidth(int width)
@@ -121,11 +136,19 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
 
     switch (msg->message)
     {
+    case WM_NCACTIVATE:
+    {
+        if(msg->wParam  ==  FALSE)
+        {
+            *result = TRUE;
+        }
+        return true;
+    }
     case WM_NCCALCSIZE:
     {
         NCCALCSIZE_PARAMS& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(msg->lParam);
-    if (params.rgrc[0].top != 0)
-        params.rgrc[0].top -= 1;
+        if (params.rgrc[0].top != 0)
+            params.rgrc[0].top -= 1;
 
         //this kills the window frame and title bar we added with WS_THICKFRAME and WS_CAPTION
         *result = WVR_REDRAW;

@@ -7,7 +7,10 @@ Dialog::Dialog(QWidget *parent) :
 {
     ui->setupUi(this);
     setTitleBar(ui->frameTitlebar);
+    setDrawBorder(false);
+//    setMoveEnable(true);
 //    setResizeEnable(false);
+//    setDbClickTitlebarMax(false);
 }
 
 Dialog::~Dialog()

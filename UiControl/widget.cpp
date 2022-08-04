@@ -33,7 +33,8 @@ Widget::~Widget()
 
 void Widget::on_pushButton_clicked()
 {
-    Dialog dl(this);
+    Dialog dl;
+    dl.setStyleSheet("background-color: rgb(48, 45, 153);");
     dl.Exec();
     //resetWidget();
 }
@@ -41,4 +42,21 @@ void Widget::on_pushButton_clicked()
 void Widget::on_pushButton_2_clicked()
 {
     QMessageBox::information(this, "test", "test");
+}
+
+void Widget::on_pushButton_3_clicked()
+{
+    static Widget *wd = nullptr;
+    if(!wd) {
+        wd = new Widget;
+    }
+    wd->show();
+}
+
+void Widget::on_pushButton_4_clicked()
+{
+    Dialog dl;
+    dl.setDrawBorder(true);
+    dl.setStyleSheet("background-color: rgb(48, 45, 153);");
+    dl.Exec();
 }

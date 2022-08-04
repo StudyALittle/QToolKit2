@@ -42,6 +42,8 @@ public:
     //设置一个浮动栏widget，此widget会被当做浮动工具栏对待
     void settoolBox(QWidget* toolbox);
 
+    // 设置是否画边框
+    void setDrawBorder(bool bDrawBorder);
 signals:
     //bMax: true（最大化） false(最小化)
     void titleDblClick(bool bMax = true);
@@ -79,6 +81,8 @@ private:
     bool m_bDbClickTitleBarMax; //点击标题栏是否最大化
     QWidget* m_toolbox;
     QPoint m_pos;
+
+    bool m_bBorder;
 };
 
 class WinLessBase
@@ -86,7 +90,9 @@ class WinLessBase
 //    Q_OBJECT
 public:
     WinLessBase(QWidget *widget) {
+        m_bBorder = false;
         m_lessWin.setWidget(widget);
+        m_lessWin.setDrawBorder(m_bBorder);
         m_widget = widget;
     }
 
@@ -112,11 +118,13 @@ public:
     void addIgnoreWidget(QWidget* widget) { m_lessWin.addIgnoreWidget(widget); }
     // windows无效
     void setDrawBorder(bool bBorder) {
+        m_lessWin.setDrawBorder(bBorder);
         m_bBorder = bBorder;
         // 设置边距，画边框
-        int cMg = 1;
-        m_widget->setContentsMargins(cMg, cMg + 1, cMg, cMg);
         if(bBorder) {
+            int cMg = 1;
+            m_widget->setContentsMargins(cMg, cMg + 1, cMg, cMg);
+
             QLayout *layout = m_widget->layout();
             if(layout) {
                 layout->setContentsMargins(cMg, cMg + 1, cMg, cMg);
@@ -154,6 +162,7 @@ protected:
 
         switch (msg->message)
         {
+        case WM_NCACTIVATE:
         case WM_NCCALCSIZE:
         case WM_NCRBUTTONDBLCLK:
         case WM_NCLBUTTONDBLCLK:
@@ -208,6 +217,7 @@ protected:
 
         switch (msg->message)
         {
+        case WM_NCACTIVATE:
         case WM_NCCALCSIZE:
         case WM_NCRBUTTONDBLCLK:
         case WM_NCLBUTTONDBLCLK:
