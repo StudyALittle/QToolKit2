@@ -289,8 +289,11 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
     } //end case WM_NCHITTEST
     case WM_GETMINMAXINFO:
     {
+        if(::IsIconic(msg->hwnd)) //判断窗口是否最小化)
+            return false;
+
         bool bTemp = m_bMax;
-        if (::IsZoomed(msg->hwnd)) {
+        if (::IsZoomed(msg->hwnd)) { //判断窗口是否最大化
             m_bMax = true;
         } else {
             m_bMax = false;
