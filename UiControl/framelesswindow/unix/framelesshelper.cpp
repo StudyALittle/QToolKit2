@@ -244,7 +244,9 @@ void WidgetData::setMax()
         bMax = true;
         m_pWidget->showMaximized();
     }
+#if !defined (W_LESSWINDOW_X11)
     emit sigMax(bMax);
+#endif
 #if 0
     if(m_bMax != bMax)
     {
@@ -475,10 +477,12 @@ void WidgetData::handleMouseReleaseEvent(QMouseEvent *event)
 
 void WidgetData::handleMouseMoveEvent(QMouseEvent *event)
 {
+#if !defined (W_LESSWINDOW_X11)
     if(m_pWidget->isMaximized())
     {
         return;
     }
+#endif
     if (m_bLeftButtonPressed)
     {
         if (d->m_bWidgetResizable && m_pressedMousePos.m_bOnEdges)
@@ -710,24 +714,84 @@ void FramelessHelper::x11MoveRelease()
 }
 
 #if defined (W_LESSWINDOW_X11)
+/**
+ * @brief isStateMaximized: 判断窗口是否是最大化
+ * @param display
+ * @param window
+ * @return
+ */
+bool isStateMaximized(Display *display, Window window)
+{
+    static Atom _NET_WM_STATE = XInternAtom(display, "_NET_WM_STATE", false);
+    static Atom _NET_WM_STATE_MAXIMIZED = XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", false);
+    Atom actual_type;
+    int actual_format;
+    unsigned long i, num_items, bytes_after;
+    Atom *atoms = nullptr;
+    XGetWindowProperty(display, window, _NET_WM_STATE, 0, 1024, False, XA_ATOM,
+                       &actual_type, &actual_format, &num_items, &bytes_after, (unsigned char**)&atoms);
+    for(i=0; i<num_items; ++i) {
+        if(atoms[i]==_NET_WM_STATE_MAXIMIZED)  {
+            XFree(atoms);
+            return true;
+        }
+    }
+    if(atoms)
+        XFree(atoms);
+    return false;
+}
+
+void LessWindowBase::maxChangeProccess()
+{
+    if(m_maxChangeCallbackFunc) {
+        bool bTemp = m_bMax;
+        m_bMax = isStateMaximized(QX11Info::display(), m_widget->winId());
+        if(!m_bMaxInit) { // 保证程序启动能够收到最大化、非最大化信号
+            m_bMaxInit = true;
+            m_maxChangeCallbackFunc(m_bMax);
+        }else if(bTemp != m_bMax) {
+            m_maxChangeCallbackFunc(m_bMax);
+        }
+    }
+}
+
 bool LessWindowBase::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
 {
     Q_UNUSED(result)
+    if(!message)
+        return false;
 
     if(eventType == "xcb_generic_event_t") {
         xcb_generic_event_t* ev = static_cast<xcb_generic_event_t*>(message);
+#if 0
+        // 85或许是鼠标按钮事件
         if(ev && (ev->response_type & ~0x80) == 85 && m_frHelper->isX11Move()) {
             m_frHelper->x11MoveRelease();
             SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
         }
-//        if(ev && ev->pad0 == 0) {
-//            switch (ev->response_type & ~0x80) {
-//                case XCB_REPARENT_WINDOW: { // 目前用此标识判断鼠标释放
-//                    SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
-//                }
-//            }
-//            //qDebug() << "nativeEventFilter type: " << (ev->response_type & ~0x80);
-//        }
+#endif
+        switch (ev->response_type & ~0x80) {
+        case XCB_PROPERTY_NOTIFY: {
+            static Atom _NET_WM_STATE = XInternAtom(QX11Info::display(), "_NET_WM_STATE", false);
+            xcb_property_notify_event_t *pnev = static_cast<xcb_property_notify_event_t*>(message);
+            if(pnev->atom == _NET_WM_STATE) {
+                maxChangeProccess();
+            }
+            break;
+        }
+        case XCB_CONFIGURE_NOTIFY: {
+            // 释放鼠标
+            // 调用x11操作界面移动后，鼠标没有释放，需要释放鼠标，目前没有找到其它比较好的鼠标释放事件
+            // 85貌似是鼠标按钮事件，但是会监听全局的鼠标事件，触发比较频繁
+            if(m_frHelper->isX11Move()) {
+                m_frHelper->x11MoveRelease();
+                SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
+            }
+            break;
+        }
+        default:
+            break;
+        }
     }
     return false;
 };

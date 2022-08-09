@@ -51,8 +51,8 @@ public:
     // 设置是否画边框
     void setDrawBorder(bool bDrawBorder);
 signals:
-    //bMax: true（最大化） false(最小化)
-    void titleDblClick(bool bMax = true);
+    //bMax: true（最大化） false(正常大小) (一般用来修改最大化按钮样式)
+    void maxChange(bool bMax = true);
 public:
     //在标题栏控件内，也可以有子控件如标签控件“label1”，此label1遮盖了标题栏，导致不能通过label1拖动窗口
     //要解决此问题，使用addIgnoreWidget(label1)
@@ -88,6 +88,7 @@ private:
     QWidget* m_toolbox;
     QPoint m_pos;
     bool m_bMax;
+    bool m_bMaxInit;
 
     bool m_bBorder;
 };
@@ -172,11 +173,11 @@ class WidgetLessWindow: public QWidget, public WinLessBase
 public:
     WidgetLessWindow(QWidget *parent = nullptr):
          QWidget(parent), WinLessBase(this) {
-         connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
+         connect(&m_lessWin, SIGNAL(maxChange(bool)), this, SIGNAL(maxChange(bool)));
     }
 signals:
-    //bMax: true（最大化） false(最小化)
-    void titleDblClick(bool bMax = true);
+    //bMax: true（最大化） false(正常大小)
+    void maxChange(bool bMax = true);
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result) override {
         //Workaround for known bug -> check Qt forum : https://forum.qt.io/topic/93141/qtablewidget-itemselectionchanged/13
@@ -223,11 +224,11 @@ public:
     DialogLessWindow(QWidget *parent = nullptr):
          QDialog(parent), WinLessBase(this) {
         m_bActive = true;
-        connect(&m_lessWin, SIGNAL(titleDblClick(bool)), this, SIGNAL(titleDblClick(bool)));
+        connect(&m_lessWin, SIGNAL(maxChange(bool)), this, SIGNAL(maxChange(bool)));
     }
 signals:
-    //bMax: true（最大化） false(最小化)
-    void titleDblClick(bool bMax = true);
+    //bMax: true（最大化） false(正常大小)
+    void maxChange(bool bMax = true);
 protected:
     bool nativeEvent(const QByteArray &eventType, void *message, long *result) override {
         //Workaround for known bug -> check Qt forum : https://forum.qt.io/topic/93141/qtablewidget-itemselectionchanged/13

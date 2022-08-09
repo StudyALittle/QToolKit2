@@ -180,6 +180,9 @@ public:
 #if defined (W_LESSWINDOW_X11)
     qApp->installNativeEventFilter(this);
 #endif
+        m_bMax = false;
+        m_bMaxInit = false;
+        m_maxChangeCallbackFunc = nullptr;
         m_frHelper = new FramelessHelper(widget);
         m_frHelper->activateOn(widget);
         m_bBorder = false;
@@ -188,6 +191,10 @@ public:
     virtual ~LessWindowBase() {
         m_frHelper->deleteLater();
         m_frHelper = 0;
+    }
+
+    void setMaxChangeCallback(std::function<void(bool)> maxChangeCallbackFunc) {
+        m_maxChangeCallbackFunc = maxChangeCallbackFunc;
     }
 
     static void drawWidgetBorder(QWidget *widget) {
@@ -239,12 +246,17 @@ public:
         Q_UNUSED(widget)
     }
 #if defined (W_LESSWINDOW_X11)
+    void maxChangeProccess();
     bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
 #endif
 protected:
     bool m_bBorder; // 是否设置边框（默认不设置）
     QWidget *m_widget;
     FramelessHelper *m_frHelper;
+    std::function<void(bool)> m_maxChangeCallbackFunc; // 最大化消息回调
+
+    bool m_bMax; // X11有效
+    bool m_bMaxInit; // X11有效
 };
 
 class WidgetLessWindow: public QWidget, public LessWindowBase
@@ -253,7 +265,13 @@ class WidgetLessWindow: public QWidget, public LessWindowBase
 public:
     WidgetLessWindow(QWidget *parent = 0):
         QWidget(parent), LessWindowBase(this) {
-        connect(m_frHelper, SIGNAL(sigMax(bool)), this, SIGNAL(titleDblClick(bool)));
+        connect(m_frHelper, SIGNAL(sigMax(bool)), this, SIGNAL(maxChange(bool)));
+
+        // 窗口最大化、恢复正常状态回调
+        auto maxChangeCallback = [this](bool bMax) {
+            emit maxChange(bMax);
+        };
+        setMaxChangeCallback(maxChangeCallback);
     }
 
 protected:
@@ -267,8 +285,8 @@ protected:
         return QWidget::paintEvent(event);
     }
 signals:
-    //bMax: true（最大化） false(最小化)
-    void titleDblClick(bool bMax = true);
+    //bMax: true（最大化） false(正常大小)
+    void maxChange(bool bMax = true);
 };
 
 class DialogLessWindow: public QDialog, public LessWindowBase
@@ -277,7 +295,13 @@ class DialogLessWindow: public QDialog, public LessWindowBase
 public:
     DialogLessWindow(QWidget *parent = 0):
         QDialog(parent), LessWindowBase(this) {
-        connect(m_frHelper, SIGNAL(sigMax(bool)), this, SIGNAL(titleDblClick(bool)));
+        connect(m_frHelper, SIGNAL(sigMax(bool)), this, SIGNAL(maxChange(bool)));
+
+        // 窗口最大化、恢复正常状态回调
+        auto maxChangeCallback = [this](bool bMax) {
+            emit maxChange(bMax);
+        };
+        setMaxChangeCallback(maxChangeCallback);
     }
 protected:
     void paintEvent(QPaintEvent *event) override {
@@ -290,8 +314,8 @@ protected:
         return QDialog::paintEvent(event);
     }
 signals:
-    //bMax: true（最大化） false(最小化)
-    void titleDblClick(bool bMax = true);
+    //bMax: true（最大化） false(正常大小)
+    void maxChange(bool bMax = true);
 };
 
 #endif //FRAMELESS_HELPER_H

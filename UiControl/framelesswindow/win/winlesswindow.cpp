@@ -1,6 +1,7 @@
 ﻿#include "winlesswindow.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QStyle>
 #include <WinUser.h>
 #include <windowsx.h>
@@ -15,6 +16,7 @@ WinLessWindow::WinLessWindow()
 {
     m_bBorder = false;
     m_bMax = false;
+    m_bMaxInit = false;
 }
 void WinLessWindow::setWidget(QWidget *widget)
 {
@@ -287,10 +289,18 @@ bool WinLessWindow::NativeEvent(const QByteArray &eventType, void *message, long
     } //end case WM_NCHITTEST
     case WM_GETMINMAXINFO:
     {
+        bool bTemp = m_bMax;
         if (::IsZoomed(msg->hwnd)) {
             m_bMax = true;
         } else {
             m_bMax = false;
+        }
+
+        if(!m_bMaxInit) { // 保证程序启动能够收到最大化、非最大化信号
+            m_bMaxInit = true;
+            emit maxChange(m_bMax);
+        }else if(bTemp != m_bMax) {
+            emit maxChange(m_bMax); // 不重复发送信号
         }
         return false;
 #if 0
@@ -348,7 +358,7 @@ bool WinLessWindow::dbClickTitleLab(MSG* msg)
                     m_widget->showNormal();
                 }
             }
-            emit titleDblClick(false);
+            //emit titleDblClick(false);
         } else {
             if(!m_moveEnable){ // m_moveEnable = false时，全屏功能失效; true window 由系统实现最大化、最小化
                 //support highdpi
@@ -358,7 +368,7 @@ bool WinLessWindow::dbClickTitleLab(MSG* msg)
                     m_widget->showMaximized();
                 }
             }
-            emit titleDblClick(true);
+            //emit titleDblClick(true);
         }
         return false;
     }
