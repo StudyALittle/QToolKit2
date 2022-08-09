@@ -764,7 +764,6 @@ bool LessWindowBase::nativeEventFilter(const QByteArray &eventType, void *messag
     if(eventType == "xcb_generic_event_t") {
         xcb_generic_event_t* ev = static_cast<xcb_generic_event_t*>(message);
 #if 0
-        // 85或许是鼠标按钮事件
         if(ev && (ev->response_type & ~0x80) == 85 && m_frHelper->isX11Move()) {
             m_frHelper->x11MoveRelease();
             SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
@@ -779,10 +778,9 @@ bool LessWindowBase::nativeEventFilter(const QByteArray &eventType, void *messag
             }
             break;
         }
-        case XCB_CONFIGURE_NOTIFY: {
+        case 85/*XCB_CONFIGURE_NOTIFY*/: {
             // 释放鼠标
-            // 调用x11操作界面移动后，鼠标没有释放，需要释放鼠标，目前没有找到其它比较好的鼠标释放事件
-            // 85貌似是鼠标按钮事件，但是会监听全局的鼠标事件，触发比较频繁
+            // 85是按钮事件，目前未找到比较好处理按钮事件的方法
             if(m_frHelper->isX11Move()) {
                 m_frHelper->x11MoveRelease();
                 SendButtonRelease(m_widget, QCursor::pos(), QCursor::pos());
