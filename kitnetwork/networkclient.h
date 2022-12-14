@@ -1,8 +1,6 @@
 ﻿#ifndef NETWORKCLIENT_H
 #define NETWORKCLIENT_H
 
-#include "kitnetwork_global.h"
-#include "netframe/netframe.h"
 #include <QObject>
 #include <QList>
 #include <QMap>
@@ -12,6 +10,8 @@
 #include <QTimer>
 #include <QThread>
 #include <memory>
+#include "kitnetwork_global.h"
+#include "netframe/netframe.h"
 
 namespace wkit {
 
@@ -19,6 +19,9 @@ class TcpClient;
 class UdpServer;
 class NetDataReslice;
 
+/**
+ * @brief The NetworkClient class: 网络通讯客户端（不跨线程使用）
+ */
 class KITNETWORK_EXPORT NetworkClient: public QObject
 {
     Q_OBJECT
@@ -59,6 +62,7 @@ public:
     /// \return 连接情况
     ///
     bool start(const QString &ip, quint16 port, bool bHead = true);
+
     /// 重连
     bool restart();
 
@@ -69,13 +73,14 @@ public:
     void close();
 
     ///
-    /// \brief sendData：发送数据到服务端
+    /// \brief sendData：发送数据到服务端（同步，线程不阻塞）
     /// \param param：发送的数据
     /// \param frameType：数据类型
     /// \param timeOut：超时时间
+    /// \param error：返回错误（0:正常返回 -1）(对应 NetResultCode)
     /// \return
     ///
-    std::shared_ptr<QByteArray> sendData(const QByteArray &param, ushort frameType, int timeOut = 3000);
+    std::shared_ptr<QByteArray> sendData(const QByteArray &param, ushort frameType, int timeOut = 3000, int *error = nullptr);
 
     ///
     /// \brief sendData: 发送数据到服务端(异步)
@@ -83,8 +88,10 @@ public:
     /// \return
     ///
     qint64 sendDataAsync(const QByteArray &param, ushort frameType);
+
     /// 发送数据到服务端(异步) , 没有数据头，没有分包处理数据，接收到的数据也没有数据头
     qint64 sendDataAsyncNoHead(const QByteArray &param);
+
 signals:
     ///
     /// \brief recvData：接收到数据时触发（异步调用才会触发）
@@ -92,8 +99,13 @@ signals:
     /// \param session：数据头信息
     ///
     void sigRecvData(std::shared_ptr<QByteArray> data, std::shared_ptr<Session> session);
+
     /// 客户端断开连接信号
     void disconnected(quint32 ipV4, int port);
+
+    /// 写入数据异常（可能是网络原因）
+    void writeError(quint32 ipV4, int port);
+
 protected:
     ///
     /// \brief dataAnalysis: 数据解析
@@ -106,7 +118,8 @@ protected:
     /// \param id
     /// \return
     ///
-    std::shared_ptr<QByteArray> getDataById(unsigned int id);
+    std::shared_ptr<QByteArray> getDataById(unsigned int id, int *error = nullptr);
+
 protected slots:
     ///
     /// \brief onReadDataFinish: 接收到数据
@@ -130,13 +143,16 @@ private:
     QString m_ip;
     quint16 m_port;
     NetworkTreatyType m_tType;
+
     QEventLoop m_eventLoop;
     QTimer m_timer;
     bool m_bInitTimer;
     QMutex m_mutexSyncId;
     QMutex m_mutexTimer;
+
     bool m_bHead;
     std::shared_ptr<QByteArray> m_dataNoHead;
+
     QMap<unsigned int, std::shared_ptr<QByteArray> > m_syncIds; //key: 数据编号标识, value: 返回的数据
     QMap<unsigned int, qint64> m_outtimeDataId; // 记录超时数据的ID key: 数据编号标识, value：数据发送时间
 
@@ -144,7 +160,7 @@ private:
     UdpServer *m_udpserver;
     NetDataReslice *m_netDataReslice;
 
-    /// 是否与第三方系统通信
+    /// 是否判断数据大小端
     bool m_bBigLittleMode; // true: 判断数据大小端
 };
 

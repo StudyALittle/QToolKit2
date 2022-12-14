@@ -2,6 +2,7 @@
 #include "netsocket/udpserver.h"
 #include "netsocket/tcpclient.h"
 #include "netframe/netdatareslice.h"
+#include "netstruct/netparam.h"
 #include <QDateTime>
 
 using namespace wkit;
@@ -72,6 +73,7 @@ bool NetworkClient::start(const QString &ip, quint16 port, bool bHead)
             connect(m_tcpclient, SIGNAL(readDataFinish(std::shared_ptr<QByteArray>, quint32, int)),
                     this, SLOT(onReadDataFinish(std::shared_ptr<QByteArray>, quint32, int)));
             connect(m_tcpclient, SIGNAL(disconnected(quint32, int)), this, SIGNAL(disconnected(quint32, int)));
+            connect(m_tcpclient, SIGNAL(writeError(quint32, int)), this, SIGNAL(writeError(quint32, int)));
         }
         return m_tcpclient->start(ip, port);
     }
@@ -97,15 +99,19 @@ void NetworkClient::close()
     if(m_tType == NetworkTreatyType::UDP){
         //UDP无连接，不做处理
     }else if(m_tType == NetworkTreatyType::TCP){
-
+        if (m_tcpclient) {
+            m_tcpclient->close();
+        }
     }
 }
 
 ///
 /// \brief sendData: 发送数据到服务端(同步)
 ///
-std::shared_ptr<QByteArray> NetworkClient::sendData(const QByteArray &param, ushort frameType, int timeOut)
+std::shared_ptr<QByteArray> NetworkClient::sendData(const QByteArray &param, ushort frameType, int timeOut, int *error)
 {
+    if (error) { *error = Success; }
+
     startTimerEx(timeOut);
 
     uint id = 0;
@@ -113,11 +119,12 @@ std::shared_ptr<QByteArray> NetworkClient::sendData(const QByteArray &param, ush
 
     if(nr <= 0){ //发送数据错误
         closeTimer();
+        if (error) { *error = NetError; }
         return std::make_shared<QByteArray>();
     }
 
     m_eventLoop.exec();
-    return getDataById(id);
+    return getDataById(id, error);
 }
 
 ///
@@ -145,15 +152,16 @@ qint64 NetworkClient::sendDataAsyncNoHead(const QByteArray &param) {
 /// \param id
 /// \return
 ///
-std::shared_ptr<QByteArray> NetworkClient::getDataById(unsigned int id)
+std::shared_ptr<QByteArray> NetworkClient::getDataById(unsigned int id, int *error)
 {
     auto result = std::make_shared<QByteArray>();
     QMutexLocker locker(&m_mutexSyncId);
-    if(m_syncIds.find(id) != m_syncIds.end()){
+    if (m_syncIds.find(id) != m_syncIds.end()){
         result = m_syncIds.value(id);
         m_syncIds.remove(id);
-    }else { // 未获取到数据，说明数据超时了
+    } else { // 未获取到数据，说明数据超时了，记录信息到超时队列中去
         m_outtimeDataId.insert(id, QDateTime::currentDateTime().toSecsSinceEpoch());
+        if (error) { *error = NetTimeOut; }
     }
     return result;
 }
@@ -177,11 +185,11 @@ void NetworkClient::dataAnalysis(const QByteArray &data, quint32 ipV4, int port)
                 memcpy(&dId, item->frameHead.gcInfo, sizeof (uint));
 
                 QMutexLocker locker(&m_mutexSyncId);
-                if(m_outtimeDataId.contains(dId)) { // 数据超时
+                if (m_outtimeDataId.contains(dId)) { // 数据超时
                     m_outtimeDataId.remove(dId);
                     delete item;
                     return;
-                }else {
+                } else {
                     m_syncIds.insert(dId, std::make_shared<QByteArray>(item->data));
                 }
 

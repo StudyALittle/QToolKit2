@@ -29,18 +29,31 @@ public:
         m_client = client;
     }
 
+    NetResultCode lastErrorCode() { return m_errCode; }
+
+    /// 获取数据
     ResponseMapJson::Ptr GetRMapJson(const QString &api, const QVariant &data = QVariant()) {
         auto rMap = RequestMapJson::packData(api, data);
-        auto pData = m_client->sendData(MapJsonUtil::variantMapToJson(rMap), m_fType, m_timeout);
+        NetResultCode errorCode;
+        auto pData = m_client->sendData(MapJsonUtil::variantMapToJson(rMap), m_fType, m_timeout, &errorCode);
         auto ptr = ResponseMapJson::unpackData(MapJsonUtil::byteArrayToVariantMap(*pData));
-        m_errCode = ptr->errCode;
+        if (errorCode != Success)
+            m_errCode = errorCode;
+        else
+            m_errCode = ptr->errCode;
         return ptr;
     }
+
+    /// 获取数据（分页查询）
     ResponsePageMapJson::Ptr GetRPageMapJson(const QString &api, int pageIndex, int pageSize, const QVariant &data = QVariant()) {
         auto rMap = RequestPageMapJson::packData(api, pageIndex, pageSize, data);
-        auto pData = m_client->sendData(MapJsonUtil::variantMapToJson(rMap), m_fType, m_timeout);
+        NetResultCode errorCode;
+        auto pData = m_client->sendData(MapJsonUtil::variantMapToJson(rMap), m_fType, m_timeout, &errorCode);
         auto ptr = ResponsePageMapJson::unpackPageData(MapJsonUtil::byteArrayToVariantMap(*pData));
-        m_errCode = ptr->errCode;
+        if (errorCode != Success)
+            m_errCode = errorCode;
+        else
+            m_errCode = ptr->errCode;
         return ptr;
     }
 
@@ -54,6 +67,7 @@ public:
         ResponseMapJson::Ptr rJson = GetRMapJson(api, data);
         return rJson->data.toInt();
     }
+
     /// 获取double数据
     double DoubleRequest(const QString &api, const QVariant &data = QVariant()) {
         ResponseMapJson::Ptr rJson = GetRMapJson(api, data);
@@ -86,7 +100,7 @@ public:
         result->pageIndex = rJson->pageIndex;
         result->pageSize = rJson->pageSize;
         for(const auto &vo: rJson->listData) {
-            result->datas.datas.append(vMapToDataOne(vo.toMap()));
+            result->datas.append(vMapToDataOne(vo.toMap()));
         }
         return result;
     }

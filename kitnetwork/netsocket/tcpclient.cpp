@@ -61,6 +61,16 @@ bool TcpClient::start(const QString &ipv4, quint16 port)
     return start(hostAddr.toIPv4Address(), port);
 }
 
+/**
+ * @brief stop: 断开与服务端的连接
+ */
+void TcpClient::close()
+{
+    if (m_tcpSocket) {
+        m_tcpSocket->close();
+    }
+}
+
 /// 初始化连接槽
 void TcpClient::initConnectSlot()
 {
@@ -95,6 +105,9 @@ qint64 TcpClient::onWriteDataLt(const QByteArray &data)
 {
     qint64 rt = m_tcpSocket->write(data);
     m_tcpSocket->flush();
+    if (rt != data.size()) { // 写入数据异常
+        emit writeError(m_ipV4, m_port);
+    }
     return rt;
 }
 
@@ -119,6 +132,7 @@ void TcpClient::onError(QAbstractSocket::SocketError socketError)
 {
     if(socketError == QAbstractSocket::RemoteHostClosedError) {
         /// 连接被关闭
+        emit disconnected(m_ipV4, m_port);
     }
     m_lastSocketError = socketError;
 }

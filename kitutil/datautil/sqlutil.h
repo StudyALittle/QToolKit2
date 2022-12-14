@@ -10,6 +10,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QPair>
+#include "kitutil_global.h"
 
 namespace wkit {
 
@@ -22,7 +23,7 @@ namespace wkit {
 // 查询时间范围
 #define WK_MYSQL_TIMESPACE  " between ? and ?"
 
-class SqlUtil
+class KITUTIL_EXPORT SqlUtil
 {
 public:
     SqlUtil();
@@ -85,7 +86,7 @@ public:
     QVariantList bindParams;
 };
 
-class SqlPackUtil
+class KITUTIL_EXPORT SqlPackUtil
 {
 public:
     enum Model {

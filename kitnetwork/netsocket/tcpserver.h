@@ -24,6 +24,12 @@ public:
     ///
     bool start(quint16 port);
 
+    /**
+     * @brief close
+     * @return
+     */
+    void close();
+
     ///
     /// \brief writeData：发送数据
     /// \param data

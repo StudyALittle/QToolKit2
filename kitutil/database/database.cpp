@@ -46,10 +46,14 @@ bool DataBase::openDatabase()
 #if defined(SQL_DRIVE_SQLITE)
     Q_UNUSED(connectionName)
     *m_database = DbConnectionPool::instance().getDatabase("QSQLITE");
-    return m_database->isOpen();
+    bool bOpen = m_database->isOpen();
+    *m_sqlError = m_database->lastError();
+    return bOpen;
 #else
     *m_database = DbConnectionPool::getConPool(m_conPoolName)->getDatabase("QMYSQL");
-    return m_database->isOpen();
+    bool bOpen = m_database->isOpen();
+    *m_sqlError = m_database->lastError();
+    return bOpen;
 #endif
 }
 

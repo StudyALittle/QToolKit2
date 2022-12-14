@@ -31,7 +31,7 @@ struct NetFrameHead
 
 /// 网络协议类型
 enum NetworkTreatyType {
-    UDP = 0, //目前只支持 UDP
+    UDP = 0,
     TCP
 };
 

@@ -10,7 +10,7 @@ namespace wkit {
 class DataUtil
 {
 public:
-    DataUtil();
+//    DataUtil();
 
     template<class C_T>
     static void cBinaryToChart(C_T *dest, const char *src, int &pos, int len, bool bSameEndien = true)

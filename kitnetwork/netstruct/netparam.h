@@ -10,6 +10,7 @@
 namespace wkit {
 
 enum NetResultCode {
+    NetTimeOut = -6,    // 请求数据超时
     NetError = -5,      // 网络错误
     AnalysisError = -4, // 网络数据解析错误
     SendError = -3,     // 发送网络数据错误
@@ -22,9 +23,8 @@ enum NetResultCode {
 struct RequestMapJson {
     using Ptr = std::shared_ptr<RequestMapJson>;
 
-    QString api;    // 接口 格式 /aa/bb
-    QVariant data;  // 输入参数 json格式
-    QStringList apis; // 解析后的api
+    QStringList apis;   // 请求api
+    QVariant data;      // 输入参数
 
     /// 获取api
     QString apiAt(int index) {
@@ -45,8 +45,8 @@ struct RequestMapJson {
     static RequestMapJson::Ptr unpackData(const QVariantMap &mapJson) {
         auto request = std::make_shared<RequestMapJson>();
         if(mapJson.contains("api")) {
-            request->api = mapJson.value("api").toString();
-            request->apis = request->api.split("/", QString::SkipEmptyParts);
+            QString strApi = mapJson.value("api").toString();
+            request->apis = strApi.split("/", QString::SkipEmptyParts);
         }
         if(mapJson.contains("data"))
             request->data = mapJson.value("data").toMap();
@@ -59,7 +59,7 @@ struct RequestPageMapJson: public RequestMapJson {
 
     int pageIndex;          // 第几页
     int pageSize;           // 每页数量
-    QVariantMap pagePars; // 请求参数
+    QVariantMap pagePars;   // 请求参数
 
     /// 打包分页数据
     static QVariantMap packData(const QString &_api, int pageIndex, int pageSize, const QVariant &_params = QVariantMap()) {
@@ -75,7 +75,6 @@ struct RequestPageMapJson: public RequestMapJson {
         auto req = RequestMapJson::unpackData(mapJson);
 
         auto request = std::make_shared<RequestPageMapJson>();
-        request->api = req->api;
         request->apis = req->apis;
 
         QVariantMap vmap = req->data.toMap();
@@ -93,11 +92,10 @@ struct RequestPageMapJson: public RequestMapJson {
 struct ResponseMapJson {
     using Ptr = std::shared_ptr<ResponseMapJson>;
 
+    QStringList apis;       // 接口api
+    QVariant data;          // 返回数据
     NetResultCode errCode;  // 执行错误编码
     QString error;          // 错误信息
-    QString api;            // 调用的接口
-    QStringList apis;       // 解析后的api
-    QVariant data;          // 返回数据
 
     /// 获取api
     QString apiAt(int index) {
@@ -136,8 +134,8 @@ struct ResponseMapJson {
     static ResponseMapJson::Ptr unpackData(const QVariantMap &mapJson) {
         auto request = std::make_shared<ResponseMapJson>();
         if(mapJson.contains("api")) {
-            request->api = mapJson.value("api").toString();
-            request->apis = request->api.split("/", QString::SkipEmptyParts);
+            QString strApi = mapJson.value("api").toString();
+            request->apis = strApi.split("/", QString::SkipEmptyParts);
         }
         if(mapJson.contains("error"))
             request->error = mapJson.value("error").toString();
@@ -173,7 +171,6 @@ struct ResponsePageMapJson: public ResponseMapJson {
         auto req = ResponseMapJson::unpackData(mapJson);
 
         auto request = std::make_shared<ResponsePageMapJson>();
-        request->api = req->api;
         request->apis = req->apis;
         request->error = req->error;
         request->errCode = req->errCode;
@@ -183,8 +180,8 @@ struct ResponsePageMapJson: public ResponseMapJson {
             request->pageIndex = vmap.value("pageIndex").toInt();
         if(vmap.contains("pageSize"))
             request->pageSize = vmap.value("pageSize").toInt();
-        if(vmap.contains("params"))
-            request->totalSize = vmap.value("params").toInt();
+        if(vmap.contains("totalSize"))
+            request->totalSize = vmap.value("totalSize").toInt();
         if(vmap.contains("listData"))
             request->listData = vmap.value("listData").toList();
         return request;

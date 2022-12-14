@@ -32,6 +32,17 @@ bool TcpServer::start(quint16 port)
     return m_tcpServer->listen(QHostAddress::Any, port);
 }
 
+/**
+ * @brief close
+ * @return
+ */
+void TcpServer::close()
+{
+    if (m_tcpServer) {
+        m_tcpServer->close();
+    }
+}
+
 ///
 /// \brief writeData：发送数据
 /// \param data

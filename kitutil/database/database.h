@@ -18,6 +18,8 @@ namespace wkit {
 class KITUTIL_EXPORT DataBase
 {
 public:
+    using Ptr = std::shared_ptr<DataBase>;
+
     enum BindType{
         Bind = 0, //执行绑定语句
         NotBind   //不执行绑定语句

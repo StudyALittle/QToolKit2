@@ -35,6 +35,11 @@ public:
     bool start(quint32 ipv4, quint16 port);
     bool start(const QString &ipv4, quint16 port);
 
+    /**
+     * @brief stop: 断开与服务端的连接
+     */
+    void close();
+
     ///
     /// \brief writeData：发送数据
     /// \param data
@@ -56,6 +61,8 @@ signals:
     void disconnected(quint32 ipV4, int port);
     /// 写数据
     void sigWriteNt(const QByteArray &data);
+    /// 写入数据异常
+    void writeError(quint32 ipV4, int port);
 protected:
     /// 初始化连接槽
     void initConnectSlot();

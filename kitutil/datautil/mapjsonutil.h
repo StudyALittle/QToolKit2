@@ -6,10 +6,11 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "ctypedefsyntax.h"
+#include "kitutil_global.h"
 
 namespace wkit {
 
-class MapJsonUtil
+class KITUTIL_EXPORT MapJsonUtil
 {
 public:
     MapJsonUtil();

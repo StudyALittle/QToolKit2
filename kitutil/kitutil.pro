@@ -33,9 +33,9 @@ SOURCES += \
     database/database.cpp \
     database/databaseconparam.cpp \
     database/dbconnectionpool.cpp \
-    datautil/datautil.cpp \
     datautil/mapjsonutil.cpp \
     datautil/sqlutil.cpp \
+    fileutil/xmloperate.cpp \
     fileutil/xmlreadwriteutil.cpp \
     kitutil.cpp \
     thread/threadpool.cpp
@@ -48,6 +48,7 @@ HEADERS += \
     datautil/datautil.h \
     datautil/mapjsonutil.h \
     datautil/sqlutil.h \
+    fileutil/xmloperate.h \
     fileutil/xmlreadwriteutil.h \
     kitutil_global.h \
     kitutil.h \
