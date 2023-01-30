@@ -1,4 +1,4 @@
-#include "dialog.h"
+﻿#include "dialog.h"
 #include "ui_dialog.h"
 
 Dialog::Dialog(QWidget *parent) :
@@ -8,9 +8,11 @@ Dialog::Dialog(QWidget *parent) :
     ui->setupUi(this);
     setTitleBar(ui->frameTitlebar);
     setDrawBorder(false);
-//    setMoveEnable(true);
-//    setResizeEnable(false);
-//    setDbClickTitlebarMax(false);
+
+    setDbClickTitlebarMax(false);
+    setResizeEnable(false);
+    setMoveEnable(true);
+    addIgnoreWidget(ui->label);
 }
 
 Dialog::~Dialog()

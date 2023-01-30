@@ -714,6 +714,17 @@ void FramelessHelper::x11MoveRelease()
 }
 
 #if defined (W_LESSWINDOW_X11)
+
+#if !defined (XCB_EVENT_RESPONSE_TYPE_MASK)
+#define XCB_EVENT_RESPONSE_TYPE_MASK (0x7f)
+#endif
+#if !defined (XCB_EVENT_RESPONSE_TYPE)
+#define XCB_EVENT_RESPONSE_TYPE(e)   (e->response_type &  XCB_EVENT_RESPONSE_TYPE_MASK)
+#endif
+#if !defined (XCB_EVENT_SENT)
+#define XCB_EVENT_SENT(e)            (e->response_type & ~XCB_EVENT_RESPONSE_TYPE_MASK)
+#endif
+
 /**
  * @brief isStateMaximized: 判断窗口是否是最大化
  * @param display
@@ -778,7 +789,7 @@ bool LessWindowBase::nativeEventFilter(const QByteArray &eventType, void *messag
             }
             break;
         }
-        case 85/*XCB_CONFIGURE_NOTIFY*/: {
+        case 85/*XCB_CONFIGURE_NOTIFY*/: { // (有些事件貌似是被qt处理过)
             // 释放鼠标
             // 85是按钮事件，目前未找到比较好处理按钮事件的方法
             if(m_frHelper->isX11Move()) {

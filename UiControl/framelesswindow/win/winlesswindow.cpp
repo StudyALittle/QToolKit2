@@ -69,7 +69,7 @@ void WinLessWindow::setResizeEnable(bool resizeable)
 
     //保留一个像素的边框宽度，否则系统不会绘制边框阴影
     //we better left 1 piexl width of border untouch, so OS can draw nice shadow around it
-    if(!m_bBorder) { // 不画边框时，绘制系统阴影
+    /*if(!m_bBorder)*/ { // 不画边框时，绘制系统阴影(已修改，绘制边框时也绘制阴影)
         const MARGINS shadow = { 1, 1, 1, 1 };
         DwmExtendFrameIntoClientArea(HWND(m_widget->winId()), &shadow);
     }
@@ -81,13 +81,13 @@ void WinLessWindow::setResizeEnable(bool resizeable)
 void WinLessWindow::setDrawBorder(bool bDrawBorder)
 {
     m_bBorder = bDrawBorder;
-    if(!m_bBorder) { // 不画边框时，绘制系统阴影
+    /*if(!m_bBorder)*/ { // 不画边框时，绘制系统阴影(已修改，绘制边框时也绘制阴影)
         const MARGINS shadow = { 1, 1, 1, 1 };
         DwmExtendFrameIntoClientArea(HWND(m_widget->winId()), &shadow);
-    } else {
+    } /*else {
         const MARGINS shadow = { 0, 0, 0, 0 };
         DwmExtendFrameIntoClientArea(HWND(m_widget->winId()), &shadow);
-    }
+    }*/
 }
 
 void WinLessWindow::setResizeableAreaWidth(int width)
