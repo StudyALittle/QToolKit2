@@ -25,7 +25,12 @@ public:
         NotBind   //不执行绑定语句
     };
 public:
-    DataBase(const QString &conPoolName);
+    /**
+     * @brief DataBase
+     * @param conPoolName: 连接池名称
+     * @param connectionName: 连接名称
+     */
+    DataBase(const QString &conPoolName, const QString &connectionName = "default");
     //析构函数，关闭数据库连接及移除连接名
     virtual ~DataBase();
 
@@ -92,11 +97,15 @@ private:
     bool queryExecBatch(QSqlQuery& sqlQuery);
     bool queryExec(QSqlQuery& sqlQuery, bool bBatch = true, const QString& sql = "");
     bool queryExecBind(QSqlQuery& sqlQuery, const QList<QVariant> &datas, const QString& sql = "");
+
+    QSqlDatabase database();
 private:
     QSqlDatabase *m_database;
     QSqlError *m_sqlError;          // 当前错误
     int m_lastInsertId;             // 最后一次插入数据的ID
     QString m_conPoolName;          // 连接池名称
+    QString m_connectionName;       // 连接名称
+    std::shared_ptr<bool> m_bConParamChanged; // 连接参数是否发生变化
 };
 
 } // end namespace

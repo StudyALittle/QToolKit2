@@ -14,11 +14,13 @@
 
 using namespace wkit;
 
-DataBase::DataBase(const QString &conPoolName)
+DataBase::DataBase(const QString &conPoolName, const QString &connectionName)
 {
     m_conPoolName = conPoolName;
+    m_connectionName = connectionName;
     m_database = new QSqlDatabase;
     m_sqlError = new QSqlError;
+    m_bConParamChanged = std::make_shared<bool>(false);
 }
 
 DataBase::~DataBase(){
@@ -45,16 +47,25 @@ bool DataBase::openDatabase()
 {
 #if defined(SQL_DRIVE_SQLITE)
     Q_UNUSED(connectionName)
-    *m_database = DbConnectionPool::instance().getDatabase("QSQLITE");
+    *m_database = DbConnectionPool::instance().getDatabase("QSQLITE", m_conPoolName);
     bool bOpen = m_database->isOpen();
     *m_sqlError = m_database->lastError();
     return bOpen;
 #else
-    *m_database = DbConnectionPool::getConPool(m_conPoolName)->getDatabase("QMYSQL");
+    *m_database = DbConnectionPool::getConPool(m_conPoolName)->getDatabase("QMYSQL", m_conPoolName);
     bool bOpen = m_database->isOpen();
     *m_sqlError = m_database->lastError();
     return bOpen;
 #endif
+}
+
+QSqlDatabase DataBase::database()
+{
+    if (*m_bConParamChanged) { // 连接参数被修改( 待实现 )
+        *m_database = DbConnectionPool::getConPool(m_conPoolName)->getDatabase("QMYSQL", m_conPoolName);
+        *m_bConParamChanged = false;
+    }
+    return *m_database;
 }
 
 //执行查询
@@ -68,7 +79,7 @@ std::shared_ptr<QSqlQuery> DataBase::query(const QString &sql, const QList<QVari
 }
 //查询数据(type == Bind 需要传递绑定参数)
 std::shared_ptr<QSqlQuery> DataBase::query(const QString &sql, BindType type, const QList<QVariant> &datas){
-    auto sqlQuery = std::make_shared<QSqlQuery>(*m_database);
+    auto sqlQuery = std::make_shared<QSqlQuery>(database());
     if (type == NotBind && !queryExec(*sqlQuery, sql)){ /*error*/ }
     else if (type == Bind && !queryExecBind(*sqlQuery, datas, sql)){ /*error*/ }
     return sqlQuery;
@@ -107,7 +118,7 @@ std::shared_ptr<QList<QMap<QString, QVariant>> > DataBase::queryList(const QStri
 
 std::shared_ptr<QSqlQueryModel> DataBase::queryModel(const QString& sql, BindType type, const QList<QVariant> &datas) {
     auto model = std::make_shared<QSqlQueryModel>();
-    QSqlQuery query(*m_database);
+    QSqlQuery query(database());
     if (type == NotBind && !queryExec(query, sql)){
         return model;
     }else if (type == Bind && !queryExecBind(query, datas, sql)){
@@ -135,7 +146,7 @@ long DataBase::queryCount(const QString& sql, const QList<QVariant> &datas)
 long DataBase::queryCount(const QString& sql, BindType type, const QList<QVariant> &datas)
 {
     long count = -1;
-    QSqlQuery query(*m_database);
+    QSqlQuery query(database());
     if (type == Bind && !queryExecBind(query, datas, sql))
     {
         return count;
@@ -150,12 +161,12 @@ long DataBase::queryCount(const QString& sql, BindType type, const QList<QVarian
 
 //执行数据
 bool DataBase::exec(const QString& sql) {
-    QSqlQuery query(*m_database);
+    QSqlQuery query(database());
     return queryExec(query, sql);
 }
 bool DataBase::exec(const QString& sql, const QList<QVariant> &datas)
 {
-    QSqlQuery query(*m_database);
+    QSqlQuery query(database());
     return queryExecBind(query, datas, sql);
 }
 
@@ -169,7 +180,7 @@ int DataBase::execAffectedRows(const QString& sql, const QList<QVariant> &datas,
 }
 //执行数据（返回成功条数）(type == Bind 需要传递绑定参数)
 int DataBase::execAffectedRows(const QString& sql, BindType type, bool bLastID, const QList<QVariant> &datas){
-    QSqlQuery query(*m_database);
+    QSqlQuery query(database());
     if (NotBind == type && !queryExec(query, sql)) return -1; //执行错误
     else if (Bind == type && !queryExecBind(query, datas, sql)) return -1; //执行错误
     if(bLastID){
@@ -180,7 +191,7 @@ int DataBase::execAffectedRows(const QString& sql, BindType type, bool bLastID, 
 
 //准备批量插入数据语句
 std::shared_ptr<QSqlQuery> DataBase::prepare(const QString& sql) {
-    std::shared_ptr<QSqlQuery> query = std::make_shared<QSqlQuery>(*m_database);
+    std::shared_ptr<QSqlQuery> query = std::make_shared<QSqlQuery>(database());
     query->prepare(sql);
     return query;
 }
@@ -234,7 +245,7 @@ bool DataBase::queryExec(QSqlQuery& sqlQuery, bool bBatch, const QString& sql) {
         }
         //*m_database = connectAndOpen(connectName);
         if (m_database->open()) {
-            sqlQuery = QSqlQuery(*m_database);
+            sqlQuery = QSqlQuery(database());
             //连接成功重新执行语句(目前不支持绑定语句)
             if (!bBatch) result = sqlQuery.exec(sql);
             //else result = sqlQuery.execBatch();
@@ -273,7 +284,7 @@ bool DataBase::queryExecBind(QSqlQuery& sqlQuery, const QList<QVariant> &datas,
             qlonglong id = reinterpret_cast<qlonglong>(QThread::currentThread());
             connectName = QString("QSQLDB_%1").arg(id);
         }
-        //*m_database = connectAndOpen(connectName);
+        //database() = connectAndOpen(connectName);
         if (m_database->open()) {
             sqlQuery = QSqlQuery(*m_database);
             //连接成功重新执行语句
