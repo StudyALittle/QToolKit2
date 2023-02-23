@@ -24,6 +24,8 @@ Widget::Widget(QWidget *parent)
 
     // 标题栏设置
     ui->widgetTitlebar->setMainWidget(this);
+
+    m_styleSheetWidget.hide();
 }
 
 Widget::~Widget()
@@ -59,4 +61,9 @@ void Widget::on_pushButton_4_clicked()
     dl.setDrawBorder(true);
     dl.setStyleSheet("background-color: rgb(48, 45, 153);");
     dl.Exec();
+}
+
+void Widget::on_pushButtonStyleSheet_clicked()
+{
+    m_styleSheetWidget.show();
 }

@@ -1,4 +1,4 @@
-#include "stylesheetexamplewidget.h"
+﻿#include "stylesheetexamplewidget.h"
 #include "ui_stylesheetexamplewidget.h"
 
 StyleSheetExampleWidget::StyleSheetExampleWidget(QWidget *parent) :
@@ -11,4 +11,10 @@ StyleSheetExampleWidget::StyleSheetExampleWidget(QWidget *parent) :
 StyleSheetExampleWidget::~StyleSheetExampleWidget()
 {
     delete ui;
+}
+
+void StyleSheetExampleWidget::on_pushButtonUseStyleSheet_clicked()
+{
+    QString styleSheet = ui->textEdit->toPlainText();
+    this->setStyleSheet(styleSheet);
 }

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "framelesswindow/frameless.h"
+#include "qstylesheet/stylesheetexamplewidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
@@ -25,7 +26,10 @@ private slots:
 
     void on_pushButton_4_clicked();
 
+    void on_pushButtonStyleSheet_clicked();
+
 private:
     Ui::Widget *ui;
+    StyleSheetExampleWidget m_styleSheetWidget;
 };
 #endif // WIDGET_H

@@ -1,4 +1,4 @@
-#ifndef STYLESHEETEXAMPLEWIDGET_H
+﻿#ifndef STYLESHEETEXAMPLEWIDGET_H
 #define STYLESHEETEXAMPLEWIDGET_H
 
 #include <QWidget>
@@ -14,6 +14,9 @@ class StyleSheetExampleWidget : public QWidget
 public:
     explicit StyleSheetExampleWidget(QWidget *parent = nullptr);
     ~StyleSheetExampleWidget();
+
+private slots:
+    void on_pushButtonUseStyleSheet_clicked();
 
 private:
     Ui::StyleSheetExampleWidget *ui;

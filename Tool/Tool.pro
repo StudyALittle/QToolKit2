@@ -17,12 +17,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     main.cpp \
+    ui/fileoptui.cpp \
     widget.cpp
 
 HEADERS += \
+    ui/fileoptui.h \
     widget.h
 
 FORMS += \
+    ui/fileoptui.ui \
     widget.ui
 
 # Default rules for deployment.

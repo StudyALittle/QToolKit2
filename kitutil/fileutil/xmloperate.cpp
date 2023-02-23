@@ -133,10 +133,83 @@ QString XmlOperate::getSingleValue(const QString &path)
  * @param path
  * @param text
  */
-void XmlOperate::setSingleValue(const QString &path, const QString &text)
+void XmlOperate::setSingleValue(const QString &path, const QString &text, bool bCreatePath)
 {
-    QDomNode node = getPathEndDomNode(path);
+    QDomNode node = getPathEndDomNode(path, bCreatePath);
     changeTextNodeValue(node, text);
+}
+
+/**
+ * @brief exchangeTowNode: 交换两个节点（路径下存在多个同级子节点）
+ * @param path: 路径
+ * @param index1: 子节点（位置）
+ * @param index2: 子节点（位置）
+ * @param commentPos: 0: 表示注释在节点上面 1: 表示注释在节点下面
+ * 示例：
+ * 输入xml：
+ * <aa>
+ *  <bb>
+ *      <!--语音指令-->
+ *      <cc><infoid>0x06080b22</infoid><period>0</period></cc>
+ *      <!--其它-->
+ *      <cc><infoid>0x06080b23</infoid><period>0</period></cc>
+ * 参数：
+ *  path: "/aa/bb"
+ *  index1: 0
+ *  index2: 1
+ */
+void XmlOperate::exchangeTowNode(const QString &path, int subIndex1, int subIndex2, int commentPos)
+{
+    if (subIndex1 == subIndex2 || subIndex1 < 0 || subIndex2 < 0)
+        return;
+
+    auto funcDesNode = [](int commentPos, const QDomNode &cNode, QDomNode &nodew) {
+        if (commentPos == 0) {
+            QDomNode conNode = cNode.previousSibling();
+            if (conNode.nodeType() == QDomNode::CommentNode) {
+                nodew = conNode;
+            }
+        } else {
+            QDomNode conNode = cNode.nextSibling();
+            if (conNode.nodeType() == QDomNode::CommentNode) {
+                nodew = conNode;
+            }
+        }
+    };
+
+    int pos = 0;         // 两个节点位置
+    QDomNode node1, node2;
+    QDomNode nodeDes1, nodeDes2;
+    QDomNode node = getPathEndDomNode(path);
+    auto childs = node.childNodes();
+    int cSize = childs.size();
+    for (int n = 0; n < cSize; ++n) {
+        QDomNode cNode = childs.at(n);
+        if (cNode.nodeType() == QDomNode::CommentNode) { // 注释节点
+        } else {
+            if (pos == subIndex1) {
+                node1 = cNode;
+                funcDesNode(commentPos, cNode, nodeDes1);
+            } else if (pos == subIndex2) {
+                node2 = cNode;
+                funcDesNode(commentPos, cNode, nodeDes2);
+            }
+            ++ pos;
+        }
+    }
+
+    if (!node1.isNull() || !node2.isNull()) {
+        auto nodeCl = node1.cloneNode();
+        // 交换节点
+        node.replaceChild(node2.cloneNode(), node1);
+        node.replaceChild(nodeCl, node2);
+    }
+    if (!nodeDes1.isNull() || !nodeDes2.isNull()) {
+        auto nodeCl = nodeDes1.cloneNode();
+        // 交换节点
+        node.replaceChild(nodeDes2.cloneNode(), nodeDes1);
+        node.replaceChild(nodeCl, nodeDes2);
+    }
 }
 
 /**
@@ -250,9 +323,9 @@ void XmlOperate::insertSingleNodeAfter(const QString &afterPath, const QString &
  */
 void XmlOperate::insert2LsChildEnd(const QString &path, const QString &nodeName,
                                    const QList<QPair<QString, QString> > &childsNodes,
-                                   bool bComment, bool bCommentPos, const QString &strComment)
+                                   bool bComment, bool bCommentPos, const QString &strComment, bool bCreatePath)
 {
-    QDomNode node = getPathEndDomNode(path);
+    QDomNode node = getPathEndDomNode(path, bCreatePath);
 
     QDomElement newEle = m_p->domDoc.createElement(nodeName);
     for (auto it = childsNodes.begin(); it != childsNodes.end(); ++it) {
@@ -351,7 +424,7 @@ bool XmlOperate::isNodeSubText(QDomNode &docElement)
  * @param path:  路径（例："/aa/bb/cc"  存在多个节点只返回第一个节点）
  * @return
  */
-QDomNode XmlOperate::getPathEndDomNode(const QString &path)
+QDomNode XmlOperate::getPathEndDomNode(const QString &path, bool bCreatePath)
 {
     QList<QMap<QString, QString> > rt;
     QStringList pathList = path.split("/", QString::SkipEmptyParts);
@@ -359,12 +432,20 @@ QDomNode XmlOperate::getPathEndDomNode(const QString &path)
         return QDomNode();
 
     QDomNode node = m_p->domDoc.documentElement();
+    QDomNode nodeTmp = node;
     for (int n = 0; n < pathList.size(); n ++) {
         if (n) {
             node = getChildFirstDomNode(node, pathList.at(n));
         }
-        if (node.isNull())
-            return node;
+        if (node.isNull()) {
+            if (bCreatePath) { // 创建路径
+                node = m_p->domDoc.createElement(pathList.at(n));
+                nodeTmp.appendChild(node);
+            } else {
+                return node;
+            }
+        }
+        nodeTmp = node;
     }
     return node;
 }
@@ -393,8 +474,6 @@ QDomNode XmlOperate::getChildFirstDomNode(QDomNode &node, const QString &nodeNam
  */
 void XmlOperate::changeTextNodeValue(QDomNode &node, const QString &text)
 {
-//    if (node.isNull() /*|| !isNodeSubText(node)*/)
-//        return;
     QDomNode domNode = node.firstChild();
     if (domNode.isNull()) {
         QDomText textEle = m_p->domDoc.createTextNode(text);

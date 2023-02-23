@@ -3,7 +3,9 @@
 
 #include <QByteArray>
 #include <memory>
+#if defined(KITNETWORK_LIBRARY)
 #include "datautil/datautil.h"
+#endif
 
 namespace wkit {
 
@@ -41,11 +43,13 @@ struct NetFrameHead
     unsigned int   unGroupLen;    /** 帧体长度(携带数据的长度)**/
     unsigned int   unFrameOffset; /** 偏移量**/
 
+#if defined(KITNETWORK_LIBRARY)
     NetFrameHead() {
         memset(gcInfo, 0, 8);
         usRest = DataUtil::isBigEndien();
         usFrameID = FT_SyncYncData;
     }
+#endif
 };
 #pragma pack()
 

@@ -11,22 +11,38 @@
 
 namespace wkit {
 
-///
-/// \brief The Task class：线程池执行任务
-///
+class ThreadPool;
+
+/**
+ * @brief The TTask class: 线程池任务基类
+ */
 class KITUTIL_EXPORT TTask
 {
 public:
     using Ptr = std::shared_ptr<TTask>;
 
-    TTask(){}
+    friend class ThreadPool;
+
+    TTask(){ m_bRun = nullptr; }
     TTask(const TTask& task) = delete;
     TTask(TTask&& task) = delete;
 
     virtual ~TTask(){}
 
-    // 线程执行函数
-    virtual void run(){}
+protected:
+    /**
+     * @brief setBRunAddr: 设置 m_bRun 的地址，如果线程退出，可以通过访问m_bRun判断是否需要退出线程，由线程池设置
+     * @param bRun
+     */
+    void setBRunAddr(bool *bRun) { m_bRun = bRun; }
+
+    /**
+     * @brief run: 实现耗时的操作
+     */
+    virtual void run() = 0;
+
+protected:
+    bool *m_bRun;
 };
 
 ///
@@ -37,51 +53,65 @@ class KITUTIL_EXPORT ThreadPool
 public:
     using Ptr = std::shared_ptr<ThreadPool>;
 
-    // 构造函数 maxThreadNum：最大线程数量
+    /**
+     * @brief ThreadPool
+     */
     ThreadPool();
-    // 析构
     ~ThreadPool();
 
-    ///
-    /// \brief instance: 获取线程池单例
-    /// \return
-    ///
+    /**
+     * @brief instance: 获取线程池单例
+     * @return
+     */
     static ThreadPool &instance();
 
-    ///
-    /// \brief start: 开启线程池
-    /// \param maxThreadNum: 线程数量
-    /// \param maxTaskSize: 最大任务数量（0：不限制任务数量）
-    ///
-    void start(int maxThreadNum, int maxTaskSize);
+    /**
+     * @brief start: 开启线程池
+     * @param maxThreadNum: 线程数量
+     * @param maxTaskSize: 最大任务数量，超过的任务丢弃（0：不限制任务数量）
+     */
+    void start(int threadNum = 10, int maxTaskSize = 0);
 
-    ///
-    /// \brief pushTask: 添加执行任务
-    /// \param task
-    ///
+    /**
+     * @brief pushTask: 添加执行任务
+     * @param task
+     */
     void pushTask(TTask::Ptr task);
 
-    ///
-    /// \brief setSaveTaskMaxSize: 设置队列存储任务最大数量
-    /// \param maxTaskSize
-    ///
+    /**
+     * @brief setSaveTaskMaxSize: 设置队列存储任务最大数量
+     * @param maxTaskSize
+     */
     void setSaveTaskMaxSize(int maxTaskSize);
 
-    ///
-    /// \brief stop: 关闭线程池
-    ///
+    /**
+     * @brief stop: 关闭线程池
+     */
     void stop();
 
-    /// 获取剩余任务数量(不准确、线程不安全)
+    /**
+     * @brief getLeftoverTaskNum: 获取剩余任务数量(不准确、线程不安全)
+     * @return
+     */
     unsigned long long getLeftoverTaskNum();
 
 protected:
-    // 执行任务线程
+    /**
+     * @brief taskExec: 执行任务线程
+     * @param threadPool
+     */
     static void taskExec(ThreadPool *threadPool);
-    // 获取一个任务
+
+    /**
+     * @brief getTask: 获取一个任务
+     * @return
+     */
     TTask::Ptr getTask();
+
 private:
-    // 清空任务
+    /**
+     * @brief clearTasks: 清空任务
+     */
     void clearTasks();
 
 private:

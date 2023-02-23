@@ -2,6 +2,7 @@
 #define WIDGET_H
 
 #include <QWidget>
+#include "ui/fileoptui.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
@@ -15,7 +16,11 @@ public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
 
+private slots:
+    void on_toolButtonOpenFileOpt_clicked();
+
 private:
     Ui::Widget *ui;
+    FileOptUi *m_fileOptUi;
 };
 #endif // WIDGET_H

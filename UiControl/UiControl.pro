@@ -28,11 +28,16 @@ CONFIG(release, debug|release) {
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+include($$PWD/../kitnetwork/kitnetwork.pri)
+
 SOURCES += \
     dialog.cpp \
     framelesswindow/lesstitlebar.cpp \
     framelesswindow/lesstitlebarbtns.cpp \
     main.cpp \
+    qstylesheet/stylesheetexamplewidget.cpp \
+    testkitnetwork/networkclientwidget.cpp \
+    testkitnetwork/networkserverwidget.cpp \
     widget.cpp
 
 HEADERS += \
@@ -40,12 +45,18 @@ HEADERS += \
     framelesswindow/frameless.h \
     framelesswindow/lesstitlebar.h \
     framelesswindow/lesstitlebarbtns.h \
+    qstylesheet/stylesheetexamplewidget.h \
+    testkitnetwork/networkclientwidget.h \
+    testkitnetwork/networkserverwidget.h \
     widget.h
 
 FORMS += \
     dialog.ui \
     framelesswindow/lesstitlebar.ui \
     framelesswindow/lesstitlebarbtns.ui \
+    qstylesheet/stylesheetexamplewidget.ui \
+    testkitnetwork/networkclientwidget.ui \
+    testkitnetwork/networkserverwidget.ui \
     widget.ui
 
 win32 {

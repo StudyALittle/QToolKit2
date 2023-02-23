@@ -1,5 +1,4 @@
-QT -= gui
-QT += xml sql
+QT += core gui widgets xml sql
 
 TEMPLATE = lib
 DEFINES += KITUTIL_LIBRARY
@@ -38,7 +37,8 @@ SOURCES += \
     fileutil/xmloperate.cpp \
     fileutil/xmlreadwriteutil.cpp \
     kitutil.cpp \
-    thread/threadpool.cpp
+    thread/threadpool.cpp \
+    widgetutil/widgetutil.cpp
 
 HEADERS += \
     ctypedefsyntax.h \
@@ -52,7 +52,8 @@ HEADERS += \
     fileutil/xmlreadwriteutil.h \
     kitutil_global.h \
     kitutil.h \
-    thread/threadpool.h
+    thread/threadpool.h \
+    widgetutil/widgetutil.h
 
 # Default rules for deployment.
 unix {

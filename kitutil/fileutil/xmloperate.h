@@ -77,7 +77,28 @@ public:
      * @param path
      * @param text
      */
-    void setSingleValue(const QString &path, const QString &text);
+    void setSingleValue(const QString &path, const QString &text, bool bCreatePath = true);
+
+    /**
+     * @brief exchangeTowNode: 交换两个节点（路径下存在多个同级子节点）
+     * @param path: 路径
+     * @param index1: 子节点（位置）
+     * @param index2: 子节点（位置）
+     * @param commentPos: 0: 表示注释在节点上面 1: 表示注释在节点下面
+     * 示例：
+     * 输入xml：
+     * <aa>
+     *  <bb>
+     *      <!--语音指令-->
+     *      <cc><infoid>0x06080b22</infoid><period>0</period></cc>
+     *      <!--其它-->
+     *      <cc><infoid>0x06080b23</infoid><period>0</period></cc>
+     * 参数：
+     *  path: "/aa/bb"
+     *  index1: 0
+     *  index2: 1
+     */
+    void exchangeTowNode(const QString &path, int subIndex1, int subIndex2, int commentPos = 0);
 
     /**
      * @brief set2LsChildVal
@@ -91,6 +112,8 @@ public:
      *  <bb>
      *      <!--语音指令-->
      *      <cc><infoid>0x06080b22</infoid><period>0</period></cc>
+     *      <!--其它-->
+     *      <cc><infoid>0x06080b23</infoid><period>0</period></cc>
      * 参数：
      *  path: "/aa/bb"
      *  index: 0 （对应cc同级节点）
@@ -128,6 +151,7 @@ public:
      * @param bComment: true，插入注释
      * @param bCommentPos: 0在节点上方插入注释, 1在节点下方插入注释（如下示例，在cc节点的上/下方插入注释）
      * @param strComment: 注释内容
+     * @param bCreatePath: 如果路径（path）不存在，就会创建路径
      * 示例：
      * 参数：
      *  path: "/aa/bb"
@@ -140,7 +164,7 @@ public:
      *      <cc><infoid>0x06080b22</infoid><period>0</period></cc>
      */
     void insert2LsChildEnd(const QString &path, const QString &nodeName, const QList<QPair<QString, QString> > &childsNodes,
-                           bool bComment = true, bool bCommentPos = 0, const QString &strComment = "");
+                           bool bComment = true, bool bCommentPos = 0, const QString &strComment = "", bool bCreatePath = true);
 
     /**
      * @brief delChildNodeAt: 删除路径下的子节点
@@ -170,9 +194,10 @@ protected:
     /**
      * @brief getPathEndDomNode: 获取路径最后一个节点的DomNode
      * @param path:  路径（例："/aa/bb/cc"  存在多个节点只返回第一个节点）
+     * @param bCreatePath: true：不存在路径时创建路径
      * @return
      */
-    QDomNode getPathEndDomNode(const QString &path);
+    QDomNode getPathEndDomNode(const QString &path, bool bCreatePath = false);
 
     /**
      * @brief getSubDomEle: 获取下一级的QDomNode, 不会获取下一级的下一级
