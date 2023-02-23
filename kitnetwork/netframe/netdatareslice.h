@@ -39,6 +39,7 @@ public:
     /// \return true 表示数据重组完成返回, 否则返回nullptr
     ///
     QList<FrameItem *> recomData(const QByteArray &data, quint32 ipv4, quint16 port, bool bBigLittleMode = false);
+
 private:
     NetFrameDataReslice m_reslice;
 

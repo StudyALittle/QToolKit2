@@ -37,7 +37,7 @@ QList<std::shared_ptr<QByteArray> > NetFrameDataReslice::splitFrame(const QByteA
     frame.usFrameH = 0xAAAA; /** 帧头标识**/
     frame.condense[0] = condense1;      /** 是否压缩**/
     frame.condense[1] = condense2;      /** 压缩算法**/
-    frame.usFrameID = frameType;     /** 信息标识(标识数据类型) **/
+    frame.usFrameID = frameType;        /** 信息标识(标识数据类型) **/
     // 服务端发送数据时，可能需要把客户端携带的ID传回去
     if (cFrameId) {
         memset(&(frame.gcInfo), 0, 8); /** 帧标识号（帧标识ID）**/

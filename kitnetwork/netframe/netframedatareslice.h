@@ -18,10 +18,10 @@
 
 // 分包大小
 #define FRAME_MAX_SPLITE_SIZE 1024*50
-// 组包超时数据处理(ms) , 丢弃时间段为重组完成的数据
+// 组包超时数据处理(ms) , 丢弃时间段未重组完成的数据
 #define FRAME_MAX_SPLITETIMESPACE_SIZE 1000*60
-// 缓存最大数据大小200M
-#define BUF_MAX_DATA_SIZE 1024*1024*200
+// 缓存最大数据大小60M
+#define BUF_MAX_DATA_SIZE 1024*1024*60
 // 丢弃5秒前的缓存数据(ms)
 #define BUF_DEL_TIME_SPACE 5000
 
@@ -345,6 +345,7 @@ public:
     /// \return
     ///
     QList<FrameItem *> joinFrame(quint32 ip, quint16 port, const QByteArray &data, bool bBigLittleMode = false);
+
 private:
     NetFrameDataReslicePrivate m_private;
 

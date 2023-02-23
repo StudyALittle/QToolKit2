@@ -39,11 +39,13 @@ public:
     ///
     qint64 writeData(const QByteArray &data, quint32 ipv4, quint16 port);
     qint64 writeData(const QByteArray &data, const QString &ipv4, quint16 port);
+
 signals:
     /// 把收到的数据发送出去
     void readDataFinish(std::shared_ptr<QByteArray> data, quint32 ipV4, int port);
     /// 写数据到客户端
     void sigWriteToClient(const QByteArray &data);
+
 protected slots:
 
     /// 新的连接
